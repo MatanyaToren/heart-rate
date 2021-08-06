@@ -84,8 +84,8 @@ class ani():
         return ln1, ln2, ln3
 
 def producer():
-    # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    cap = cv2.VideoCapture("../videos/MATANYA_63bpm_60sec.mp4")
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    # cap = cv2.VideoCapture("../videos/MATANYA_63bpm_60sec.mp4")
     
     while stopCapture.is_set() is not True:
         ret, frame = cap.read()
@@ -196,7 +196,7 @@ def processor():
             
         frameRect = cv2.flip(cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2), 1)
         cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-        cv2.imshow('frame', frameRect[::3, ::3, :])    
+        cv2.imshow('frame', frameRect[::2, ::2, :])    
         FrameQueue.task_done()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
