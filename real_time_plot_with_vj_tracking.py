@@ -3,12 +3,13 @@ import cv2
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import scipy.signal as signal
-import scipy.fft as fft
+from scipy import fft
 from time import time, sleep
 from queue import Queue, Empty
 from threading import Thread, Event
 from welch_update import welch_update
 import os
+
 
 Fs = 15
 nperseg = 12 * Fs
@@ -23,7 +24,7 @@ ydata = []
 t = np.arange(nperseg)/Fs
 ln1, = ax1.plot([], [])
 
-freq = fft.rfftfreq(60*Fs, d=1/Fs) * 60
+freq = np.fft.rfftfreq(60*Fs, d=1/Fs) * 60
 
 ax2.set_xlabel('bpm')
 ln2, = ax2.plot([], [])
@@ -85,7 +86,7 @@ class ani():
 
 def producer():
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    # cap = cv2.VideoCapture("../videos/MATANYA_63bpm_60sec.mp4")
+    #cap = cv2.VideoCapture(r'C:\Users\יובל\Desktop\טכניון\סמסטר 6\פרוייקט\yuval_anotherPhone_20201114_203055.mp4')
     
     while stopCapture.is_set() is not True:
         ret, frame = cap.read()
@@ -104,7 +105,7 @@ def producer():
 def processor():
     
     # Viola & Jones face recognition
-    cascPath = os.path.join(os.path.dirname(cv2.__file__), 'data', 'haarcascade_frontalface_default.xml')
+    cascPath = '.\data\haarcascade_frontalcatface.xml'
     faceCascade = cv2.CascadeClassifier(cascPath)
     detectionRate = 120
 
@@ -121,7 +122,11 @@ def processor():
     (x, y, w, h) = (0, 0, 0, 0)
     raw_signal = []
     filtered_signal = np.array([])
-    downSize = 0.6
+
+    offset_x = 0.05
+    offset_y = 0.6
+    size_x = 0.25
+    size_y = 0.25
     global numFrames 
     numFrames = 0
     HeartRate = 0.0
@@ -149,10 +154,10 @@ def processor():
             # Draw a rectangle around the faces
             if len(faces) > 0:
                 (x, y, w, h) = faces[0]
-                x = int(x + w * (1-downSize)/2)
-                w = int(w * downSize)
-                y = int(y + h * (1-downSize)/2)
-                h = int(h * downSize)
+                # x = int(x + w * (1-downSize)/2)
+                # w = int(w * downSize)
+                # y = int(y + h * (1-downSize)/2)
+                # h = int(h * downSize)
                 
             
 
@@ -175,11 +180,16 @@ def processor():
             else:
                 x, y = int(x), int(y)
             # print('update')
-        
+
+        x_bb = int(x + offset_x * w)
+        w_bb = int(w * size_x)
+        y_bb = int(y + offset_y * h)
+        h_bb = int(h * size_y)
+
         # spatial mean of the bounding box of the face
-        if w == 0 or h == 0:
+        if w_bb == 0 or h_bb == 0:
             raise RuntimeError('slice is empty')
-        raw_signal.append(np.mean(frame[x:x+w, y:y+w, 1][:]))
+        raw_signal.append(np.mean(frame[x_bb:x_bb+w_bb, y_bb:y_bb+w_bb, 1][:]))
         
 
         if 0 < len(raw_signal) and 0 == len(raw_signal) % 10:
@@ -194,7 +204,7 @@ def processor():
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
             
-        frameRect = cv2.flip(cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2), 1)
+        frameRect = cv2.flip(cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2), 1)
         cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
         cv2.imshow('frame', frameRect[::2, ::2, :])    
         FrameQueue.task_done()
