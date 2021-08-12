@@ -26,11 +26,14 @@ ln1, = ax1.plot([], [])
 freq = fft.rfftfreq(60*Fs, d=1/Fs) * 60
 
 ax2.set_xlabel('bpm')
+ax2.set_title('welch periodogram')
 ln2, = ax2.plot([], [])
 
 ax3.set_xlabel('bpm')
 ax3.set_title('fft')
 ln3, = ax3.plot([], [])
+
+plt.tight_layout()
 
 FrameQueue = Queue()
 SignalQueue = Queue()
