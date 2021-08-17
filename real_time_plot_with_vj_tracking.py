@@ -11,7 +11,7 @@ from welch_update import welch_update
 import os
 
 
-Fs = 15
+Fs = 30
 nperseg = 12 * Fs
 noverlap = 10 * Fs
 nstep = nperseg - noverlap
@@ -45,7 +45,7 @@ stopCapture = Event()
 class ani():
     def __init__(self):
         self.ani = FuncAnimation(fig, self.update,
-                                init_func=self.init, blit=True, interval=1)
+                                init_func=self.init, blit=True, interval=1000)
 
     def init(self):
         ax1.set_xlim(0, nperseg//Fs)
