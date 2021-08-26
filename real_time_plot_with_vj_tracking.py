@@ -45,7 +45,11 @@ stopCapture = Event()
 class ani():
     def __init__(self):
         self.ani = FuncAnimation(fig, self.update,
+<<<<<<< HEAD
                                 init_func=self.init, blit=True, interval=200)
+=======
+                                init_func=self.init, blit=True, interval=1000)
+>>>>>>> a322a450c657b87411ef8a5ec9deabb095411ba2
 
     def init(self):
         ax1.set_xlim(0, nperseg//Fs)
