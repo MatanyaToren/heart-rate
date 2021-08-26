@@ -11,7 +11,7 @@ from welch_update import welch_update
 import os
 
 
-Fs = 15
+Fs = 30
 nperseg = 12 * Fs
 noverlap = 10 * Fs
 nstep = nperseg - noverlap
@@ -45,7 +45,7 @@ stopCapture = Event()
 class ani():
     def __init__(self):
         self.ani = FuncAnimation(fig, self.update,
-                                init_func=self.init, blit=True, interval=1)
+                                init_func=self.init, blit=True, interval=200)
 
     def init(self):
         ax1.set_xlim(0, nperseg//Fs)
@@ -89,7 +89,7 @@ class ani():
 
 def producer():
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    #cap = cv2.VideoCapture(r'C:\Users\יובל\Desktop\טכניון\סמסטר 6\פרוייקט\yuval_anotherPhone_20201114_203055.mp4')
+    # cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
     
     while stopCapture.is_set() is not True:
         ret, frame = cap.read()
@@ -100,7 +100,7 @@ def producer():
             break
 
     SignalQueue.put(None)
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
     cap.release()
     
 
@@ -207,12 +207,14 @@ def processor():
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
             
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
         frameRect = cv2.flip(cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2), 1)
         cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
         cv2.imshow('frame', frameRect[::2, ::2, :])    
         FrameQueue.task_done()
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
             SignalQueue.put(None)
             stopCapture.set()
             break
