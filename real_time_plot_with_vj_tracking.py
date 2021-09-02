@@ -9,9 +9,11 @@ from queue import Queue, Empty
 from threading import Thread, Event
 from welch_update import welch_update
 import os
+import sys
+from tracking import *
 
 
-Fs = 30
+Fs = 15
 nperseg = 12 * Fs
 noverlap = 10 * Fs
 nstep = nperseg - noverlap
@@ -45,11 +47,7 @@ stopCapture = Event()
 class ani():
     def __init__(self):
         self.ani = FuncAnimation(fig, self.update,
-<<<<<<< HEAD
                                 init_func=self.init, blit=True, interval=200)
-=======
-                                init_func=self.init, blit=True, interval=1000)
->>>>>>> a322a450c657b87411ef8a5ec9deabb095411ba2
 
     def init(self):
         ax1.set_xlim(0, nperseg//Fs)
@@ -95,6 +93,14 @@ def producer():
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     # cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
     
+    # Read first frame.
+    for i in range(5):
+        ret, frame = cap.read()
+        if not ret:
+            print('Cannot read video file')
+            sys.exit()
+
+
     while stopCapture.is_set() is not True:
         ret, frame = cap.read()
         # frameSmall = cv2.resize(frame, (640, 360))
@@ -117,7 +123,7 @@ def processor():
     detectionRate = 120
 
     # MOSSE tracker
-    tracker = cv2.legacy.TrackerMOSSE_create()
+    tracker = FaceTracker()
 
 
     bandPass = signal.firwin(100, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
@@ -130,10 +136,10 @@ def processor():
     raw_signal = []
     filtered_signal = np.array([])
 
-    offset_x = 0.05
+    offset_x = 0.1
     offset_y = 0.6
-    size_x = 0.25
-    size_y = 0.25
+    size_x = 0.2
+    size_y = 0.2
     global numFrames 
     numFrames = 0
     HeartRate = 0.0
@@ -146,47 +152,24 @@ def processor():
         if numFrames % (30//Fs) != 0:
             continue
 
-        
-        if numFrames % detectionRate == 1 or not ok:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
-            faces = faceCascade.detectMultiScale(
-                gray,
-                scaleFactor=1.05,
-                minNeighbors=6,
-                minSize=(100, 100),
-                flags=cv2.CASCADE_SCALE_IMAGE
-            )
+        # cv2.imshow('video', frame)
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     cv2.destroyAllWindows()
+        #     SignalQueue.put(None)
+        #     stopCapture.set()
+        #     break
 
-            # Draw a rectangle around the faces
-            if len(faces) > 0:
-                (x, y, w, h) = faces[0]
-                # x = int(x + w * (1-downSize)/2)
-                # w = int(w * downSize)
-                # y = int(y + h * (1-downSize)/2)
-                # h = int(h * downSize)
-                
-            
+        try:
+            x, y, w, h = tracker.update(frame)
 
-            if h == 0 or w == 0:
-                ok = False
-                continue
+        except (TrackingError, OutOfFrameError) as err:
+            print(err.message)
+            continue
 
-            tracker = cv2.legacy.TrackerMOSSE_create()
-            tracker.init(frame, (x, y, w, h))
-            ok = True
-            # print('reinitiate')
-            
-
-        else:
-            ok, bbox = tracker.update(frame)
-            x, y, wnew, hnew = bbox
-
-            if wnew > 0 and hnew > 0:
-                x, y, w, h = int(x), int(y), int(wnew), int(hnew)
-            else:
-                x, y = int(x), int(y)
-            # print('update')
+        except DetectionError as err:
+            print(err.message)
+            continue
+       
 
         x_bb = int(x + offset_x * w)
         w_bb = int(w * size_x)
@@ -211,7 +194,7 @@ def processor():
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
             
-        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.rectangle(frame, (int(x), int(y)), (int(x+w), int(y+h)), (0, 255, 0), 2, 1)
         frameRect = cv2.flip(cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2), 1)
         cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
         cv2.imshow('frame', frameRect[::2, ::2, :])    
