@@ -116,14 +116,9 @@ def producer():
 
 
 def processor():
-    
-    # Viola & Jones face recognition
-    cascPath = '.\data\haarcascade_frontalcatface.xml'
-    faceCascade = cv2.CascadeClassifier(cascPath)
-    detectionRate = 120
 
-    # MOSSE tracker
-    tracker = FaceTracker()
+    # long term tracker
+    tracker = FaceTracker(detectionRate = 120)
 
 
     bandPass = signal.firwin(100, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
