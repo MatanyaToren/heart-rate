@@ -121,7 +121,9 @@ def processor():
 
     # long term tracker
     tracker = FaceTracker(detectionRate = 120)
-    resp = respiratory(n_beats = 60)  # respiratory rate instance
+    
+    # respiratory rate instance
+    resp = respiratory(n_beats = 60, distance = int(2*Fs/3))
 
     bandPass = signal.firwin(100, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
     z = np.zeros(bandPass.shape[-1]-1)
@@ -140,6 +142,7 @@ def processor():
     global numFrames 
     numFrames = 0
     HeartRate = 0.0
+    RespRate = 0.0
 
     while True:
         frame = FrameQueue.get()
@@ -160,11 +163,11 @@ def processor():
             x, y, w, h = tracker.update(frame)
 
         except (TrackingError, OutOfFrameError) as err:
-            print(err.message)
+            # print(err.message)
             continue
 
         except DetectionError as err:
-            print(err.message)
+            # print(err.message)
             continue
 
         x_bb = int(x + offset_x * w)
@@ -192,10 +195,12 @@ def processor():
         if resp_nstep < filtered_signal.shape[0] and 0 == filtered_signal.shape[0] % resp_nstep:
             # calculate the respiratory rate
             freqs, pgram = resp.main(filtered_signal[-resp_nstep:])
+            RespRate = freqs[pgram.argmax()] * Fs * 60
 
         cv2.rectangle(frame, (int(x), int(y)), (int(x+w), int(y+h)), (0, 255, 0), 2, 1)
         frameRect = cv2.flip(cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2), 1)
         cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+        cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(RespRate), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
         cv2.imshow('frame', frameRect[::2, ::2, :])    
         FrameQueue.task_done()
 

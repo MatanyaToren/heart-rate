@@ -7,7 +7,7 @@ class respiratory():
     """
     class for estimating resipratory rate from rppg signal
     """
-    def __init__(self, n_beats, distance=7, display=True):
+    def __init__(self, n_beats, distance=7, display=False):
         self.peak_times = []
         self.rri = []
         self.freqs = []
@@ -48,11 +48,11 @@ class respiratory():
         """
         main calculation of respiratory rate
         """
-        self.find_peaks(ppg)
+        peaks = self.find_peaks(ppg)
         self.freqs, self.pgram = self.esitmate_res_rate()
 
         if self.fig is not None:
-            self.update_plot(ppg)
+            self.update_plot(ppg, peaks)
 
         return self.freqs, self.pgram
 
@@ -64,12 +64,15 @@ class respiratory():
         return f, pgram
 
     
-    def update_plot(self, ppg):
-        xdata = iter([np.arange(self.time-len(ppg), self.time), self.peak_times, self.freqs, self.peak_times])
-        ydata = iter([ppg, ppg[np.array(self.peak_times)-self.time], self.pgram, self.rri])
+    def update_plot(self, ppg, peaks):
+        xdata = iter([np.arange(self.time-len(ppg), self.time), peaks+self.time-len(ppg), self.freqs, self.peak_times])
+        ydata = iter([ppg, ppg[peaks], self.pgram, self.rri])
         for ax in self.fig.get_axes():
             for line in ax.get_lines():
-                line.set_data(next(xdata), next(ydata))
+                x = next(xdata)
+                y = next(ydata)
+                # print(len(x), len(y))
+                line.set_data(x, y)
             ax.relim()
             # update ax.viewLim using the new dataLim
             ax.autoscale_view()
@@ -108,7 +111,7 @@ if __name__ == '__main__':
     x = np.sin(2*np.pi/10*n + np.sin(n*2*np.pi/40))  + np.random.randn(N)/5
 
     # freqs = np.linspace(0.01, np.pi, 50)
-    res = respiratory(1000, display=False)
+    res = respiratory(1000, display=True)
     
     freq, ppx = res.main(x)
 
