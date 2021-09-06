@@ -11,12 +11,14 @@ from welch_update import welch_update
 import os
 import sys
 from tracking import *
+from respiratory_rate import *
 
 
 Fs = 15
 nperseg = 12 * Fs
 noverlap = 10 * Fs
 nstep = nperseg - noverlap
+resp_nstep = 10 * Fs  # updating rate of the respiratory rate
 
 min_bpm, max_bpm = (45, 200)
 min_idx = int(min_bpm)
@@ -119,7 +121,7 @@ def processor():
 
     # long term tracker
     tracker = FaceTracker(detectionRate = 120)
-
+    resp = respiratory(n_beats = 60)  # respiratory rate instance
 
     bandPass = signal.firwin(100, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
     z = np.zeros(bandPass.shape[-1]-1)
@@ -164,7 +166,6 @@ def processor():
         except DetectionError as err:
             print(err.message)
             continue
-       
 
         x_bb = int(x + offset_x * w)
         w_bb = int(w * size_x)
@@ -175,7 +176,6 @@ def processor():
         if w_bb == 0 or h_bb == 0:
             raise RuntimeError('slice is empty')
         raw_signal.append(np.mean(frame[x_bb:x_bb+w_bb, y_bb:y_bb+w_bb, 1][:]))
-        
 
         if 0 < len(raw_signal) and 0 == len(raw_signal) % 10:
             filtered_chunk, z = signal.lfilter(bandPass, 1, raw_signal[-10:], zi=z)
@@ -188,7 +188,11 @@ def processor():
             HeartRate = f[np.argmax(pxx)] * 60
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
-            
+
+        if resp_nstep < filtered_signal.shape[0] and 0 == filtered_signal.shape[0] % resp_nstep:
+            # calculate the respiratory rate
+            freqs, pgram = resp.main(filtered_signal[-resp_nstep:])
+
         cv2.rectangle(frame, (int(x), int(y)), (int(x+w), int(y+h)), (0, 255, 0), 2, 1)
         frameRect = cv2.flip(cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2), 1)
         cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
