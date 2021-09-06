@@ -7,10 +7,13 @@ class respiratory():
     """
     class for estimating resipratory rate from rppg signal
     """
-    def __init__(self, n_beats, display=True):
+    def __init__(self, n_beats, distance=7, display=True):
         self.peak_times = []
         self.rri = []
+        self.freqs = []
+        self.pgrams = []
         self.time = 0
+        self.distance = distance
 
         # self.freqs = freqs
         self.n_beats = n_beats
@@ -35,7 +38,7 @@ class respiratory():
         """
         find ppg peaks
         """
-        peaks, _ = signal.find_peaks(ppg, distance=7)
+        peaks, _ = signal.find_peaks(ppg, distance=self.distance)
         self.peak_times.extend((peaks+self.time).tolist()[1:])
         self.rri.extend(np.diff(peaks).tolist())
         self.time += len(ppg)
@@ -46,9 +49,12 @@ class respiratory():
         main calculation of respiratory rate
         """
         self.find_peaks(ppg)
-        freqs, pgram = self.esitmate_res_rate()
+        self.freqs, self.pgram = self.esitmate_res_rate()
 
-        return freqs, pgram
+        if self.fig is not None:
+            self.update_plot(ppg)
+
+        return self.freqs, self.pgram
 
     def esitmate_res_rate(self):
         """
@@ -56,6 +62,19 @@ class respiratory():
         """
         f, pgram = respiratory.lomb(self.peak_times[-self.n_beats:], self.rri[-self.n_beats:])
         return f, pgram
+
+    
+    def update_plot(self, ppg):
+        xdata = iter([np.arange(self.time-len(ppg), self.time), self.peak_times, self.freqs, self.peak_times])
+        ydata = iter([ppg, ppg[np.array(self.peak_times)-self.time], self.pgram, self.rri])
+        for ax in self.fig.get_axes():
+            for line in ax.get_lines():
+                line.set_data(next(xdata), next(ydata))
+            ax.relim()
+            # update ax.viewLim using the new dataLim
+            ax.autoscale_view()
+        self.fig.canvas.draw_idle()
+
 
     def lomb(t, y):
         """Compute the Lomb-Scargle periodogram
@@ -89,11 +108,11 @@ if __name__ == '__main__':
     x = np.sin(2*np.pi/10*n + np.sin(n*2*np.pi/40))  + np.random.randn(N)/5
 
     # freqs = np.linspace(0.01, np.pi, 50)
-    res = respiratory(1000)
+    res = respiratory(1000, display=False)
     
-    peaks = res.find_peaks(x)
-    freqs, pgram = res.esitmate_res_rate()
+    freq, ppx = res.main(x)
 
+    print('respiratory rate is {:.2f} Hz'.format(freq[ppx.argmax()]))
     # import matplotlib.pyplot as plt
     # fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1)
     # ax1.plot(n, x)
@@ -106,5 +125,5 @@ if __name__ == '__main__':
     # ax3.plot(res.peak_times, res.rri)
     # ax3.set_xlabel('sample time')
     # ax3.set_ylabel('rri')
-    #
-    # plt.show()
+    
+    plt.show()
