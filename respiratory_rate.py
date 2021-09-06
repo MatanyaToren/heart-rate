@@ -1,20 +1,36 @@
 import numpy as np
 import cv2
 import scipy.signal as signal
+import matplotlib.pyplot as plt
 
 class respiratory():
     """
     class for estimating resipratory rate from rppg signal
     """
-    def __init__(self, n_beats):
+    def __init__(self, n_beats, display=True):
         self.peak_times = []
         self.rri = []
         self.time = 0
 
         # self.freqs = freqs
         self.n_beats = n_beats
+        self.fig = None
 
-    
+        if display:
+            self.fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1)
+            ax1.plot([], [])
+            ax1.plot([], [], "x")
+            ax1.set_xlabel('sample')
+
+            ax2.plot([], [])
+            ax2.set_xlabel('theta [rad]')
+
+            ax3.plot([], [])
+            ax3.set_xlabel('sample time')
+            ax3.set_ylabel('rri')
+
+            plt.tight_layout()
+
     def find_peaks(self, ppg):
         """
         find ppg peaks
@@ -25,6 +41,14 @@ class respiratory():
         self.time += len(ppg)
         return peaks
 
+    def main(self, ppg):
+        """
+        main calculation of respiratory rate
+        """
+        self.find_peaks(ppg)
+        freqs, pgram = self.esitmate_res_rate()
+
+        return freqs, pgram
 
     def esitmate_res_rate(self):
         """
@@ -61,7 +85,7 @@ class respiratory():
 
 if __name__ == '__main__':
     n = np.arange(1000)
-    x = np.sin(np.pi/10*n + np.pi*np.sin(n*np.pi/80)) # + np.random.randn(1000)/5
+    x = np.sin(2*np.pi/10*n + np.sin(2*n*np.pi/80)) + np.random.randn(1000)/5
 
     # freqs = np.linspace(0.01, np.pi, 50)
     res = respiratory(1000)
@@ -69,17 +93,17 @@ if __name__ == '__main__':
 
     freqs, pgram = res.esitmate_res_rate()
 
-    import matplotlib.pyplot as plt
-    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1)
-    ax1.plot(n, x)
-    ax1.plot(peaks, x[peaks], "x")
-    ax1.set_xlabel('sample')
-
-    ax2.plot(freqs, pgram)
-    ax2.set_xlabel('theta [rad]')
-
-    ax3.plot(res.peak_times, res.rri)
-    ax3.set_xlabel('sample time')
-    ax3.set_ylabel('rri')
-
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1)
+    # ax1.plot(n, x)
+    # ax1.plot(peaks, x[peaks], "x")
+    # ax1.set_xlabel('sample')
+    #
+    # ax2.plot(freqs, pgram)
+    # ax2.set_xlabel('theta [rad]')
+    #
+    # ax3.plot(res.peak_times, res.rri)
+    # ax3.set_xlabel('sample time')
+    # ax3.set_ylabel('rri')
+    #
+    # plt.show()
