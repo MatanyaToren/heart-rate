@@ -19,7 +19,7 @@ class respiratory():
         """
         find ppg peaks
         """
-        peaks, _ = signal.find_peaks(ppg)
+        peaks, _ = signal.find_peaks(ppg, distance=7)
         self.peak_times.extend((peaks+self.time).tolist()[1:])
         self.rri.extend(np.diff(peaks).tolist())
         self.time += len(ppg)
@@ -60,13 +60,14 @@ class respiratory():
 
 
 if __name__ == '__main__':
-    n = np.arange(1000)
-    x = np.sin(np.pi/10*n + np.pi*np.sin(n*np.pi/80)) # + np.random.randn(1000)/5
+    N = 1000
+    n = np.arange(N)
+    x = np.sin(2*np.pi/10*n + np.sin(n*2*np.pi/40))  + np.random.randn(N)/5
 
     # freqs = np.linspace(0.01, np.pi, 50)
     res = respiratory(1000)
+    
     peaks = res.find_peaks(x)
-
     freqs, pgram = res.esitmate_res_rate()
 
     import matplotlib.pyplot as plt
@@ -74,6 +75,7 @@ if __name__ == '__main__':
     ax1.plot(n, x)
     ax1.plot(peaks, x[peaks], "x")
     ax1.set_xlabel('sample')
+    ax1.set_xlim([0, 200])
 
     ax2.plot(freqs, pgram)
     ax2.set_xlabel('theta [rad]')
