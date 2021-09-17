@@ -7,7 +7,8 @@ class respiratory():
     """
     class for estimating resipratory rate from rppg signal
     """
-    def __init__(self, n_beats, distance=7, display=False):
+    def __init__(self, n_beats, fs, distance=7, display=False):
+        self.fs = fs
         self.peak_times = []
         self.rri = []
         self.freqs = []
@@ -20,7 +21,7 @@ class respiratory():
         self.fig = None
 
         if display:
-            self.fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1)
+            self.fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(5,4))
             ax1.plot([], [])
             ax1.plot([], [], "x")
             ax1.set_xlabel('sample')
@@ -60,7 +61,7 @@ class respiratory():
         """
         use time differences between peaks to estimate resipratory rate
         """
-        f, pgram = respiratory.lomb(self.peak_times[-self.n_beats:], self.rri[-self.n_beats:])
+        f, pgram = respiratory.lomb(self.fs*np.array(self.peak_times[-self.n_beats:]), self.rri[-self.n_beats:])
         return f, pgram
 
     
@@ -111,7 +112,7 @@ if __name__ == '__main__':
     x = np.sin(2*np.pi/10*n + np.sin(n*2*np.pi/40))  + np.random.randn(N)/5
 
     # freqs = np.linspace(0.01, np.pi, 50)
-    res = respiratory(1000, display=True)
+    res = respiratory(1000, 1, display=True)
     
     freq, ppx = res.main(x)
 

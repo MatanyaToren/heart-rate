@@ -123,7 +123,7 @@ def processor():
     tracker = FaceTracker(detectionRate = 120)
     
     # respiratory rate instance
-    resp = respiratory(n_beats = 60, distance = int(2*Fs/3))
+    resp = respiratory(fs = Fs, n_beats = 60, distance = int(2*Fs/3))
 
     bandPass = signal.firwin(100, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
     z = np.zeros(bandPass.shape[-1]-1)
