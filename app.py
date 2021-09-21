@@ -40,7 +40,7 @@ class App():
         self.filtered_signal = []
         
         self.bandPass = signal.firwin(100, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
-        self.z = np.zeros(self.bandPass.shape[-1]-1)
+        self.z = 4*np.ones(self.bandPass.shape[-1]-1)
         
         self.tracker = FaceTracker()
         self.resp = respiratory(n_beats = 60, distance = int(2*Fs/3))
@@ -63,17 +63,17 @@ class App():
             self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
             self.SignalQueue.put(self.filtered_signal)
 
-        if self.nperseg < self.n and 0 == self.n % self.nstep:
+        if self.nperseg <= self.n and 0 == self.n % self.nstep:
             f, pxx = self.welch_obj.update(self.filtered_signal[-self.nperseg:])
             self.WelchQueue.put((f, pxx))
             self.HeartRate = f[np.argmax(pxx)] * 60
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
 
-        if self.resp_nstep < self.n and 0 == self.n % self.resp_nstep:
+        if self.resp_nstep <= self.n and 0 == self.n % self.resp_nstep:
             # calculate the respiratory rate
             freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-            self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri':np.array(self.resp.rri)})
+            self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
             self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
 
              

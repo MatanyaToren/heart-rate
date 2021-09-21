@@ -81,6 +81,7 @@ class AppWindow(QWidget):
         self.Fs = 10
         self.n_seonds = 20
         self.t = np.linspace(start=0, stop=self.n_seonds, num=self.n_seonds*self.Fs, endpoint=False)
+        self.newData = None
         
         self.initUI()
 
@@ -94,7 +95,7 @@ class AppWindow(QWidget):
         
         try:
             f, pxx = self.App.WelchQueue.get_nowait()
-            WelchLine.set_data(f, pxx)
+            WelchLine.set_data(f*60, pxx)
             self.WelchAx.set_ylim([0, pxx.max()])
             
         except Empty:
@@ -111,32 +112,31 @@ class AppWindow(QWidget):
         
         try:
             filtered_signal = self.App.SignalQueue.get_nowait()
-            # N = len(filtered_signal)
-            # currTime = N/self.App.Fs
-            # t = np.linspace(start=0, stop=currTime, num=N, endpoint=False)
+      
             ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seonds*self.App.Fs:])
             self.ppgAx.set_ylim([filtered_signal[-self.n_seonds*self.App.Fs:].min(), filtered_signal[-self.n_seonds*self.App.Fs:].max()])
-            # self.ppgAx.set_xlim([currTime-10, currTime])
-        
-        # except Empty:
-        #     pass
-        
-        # try:
-            newData = self.App.RespQueue.get_nowait()
-            rri = newData['rri']/self.App.Fs
+
+            try:
+                newData = self.App.RespQueue.get_nowait()
+                self.newData = newData
+            
+            except Empty:
+                if self.newData is not None:
+                    newData = self.newData
+                else:
+                    return ppgLine, maxLine, rriLine, lombLine
+                
             
             shift_indx = max(0, filtered_signal.shape[0]-self.n_seonds*self.App.Fs)
-            peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx] - shift_indx
+            peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx]
+            rri = newData['rri'][-len(peak_times):]/self.App.Fs
             
-            maxLine.set_data(self.t[peak_times], filtered_signal[newData['peak_times']])
-            rriLine.set_data(self.t[peak_times], rri[shift_indx:])
-            lombLine.set_data(newData['freqs'], newData['pgram'])
+            maxLine.set_data(self.t[peak_times-shift_indx], filtered_signal[peak_times])
+            rriLine.set_data(self.t[peak_times-shift_indx], rri)
+            lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
-            self.rriAx.set_ylim([0, rri[shift_indx:].max()])
-            # self.rriAx.set_xlim([currTime-20, currTime])
-            
-            # self.lombAx.relim()
-            # self.lombAx.autoscale_view()
+            self.rriAx.set_ylim([0, rri.max()])
+            self.lombAx.set_ylim([0, newData['pgram'].max()])
             
         except Empty:
             pass
@@ -194,7 +194,8 @@ class AppWindow(QWidget):
         self.rriAx.set_title('rri signal')
         
         self.lombAx.plot([], [])
-        self.lombAx.set_xlabel('theta [rad]')
+        self.lombAx.set_xlim([0, 40])
+        self.lombAx.set_xlabel('breaths per minute')
         self.lombAx.set_title('lomb periogogram')
         
         self.WelchFig.tight_layout()
