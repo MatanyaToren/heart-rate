@@ -73,7 +73,7 @@ class App():
         if self.resp_nstep < self.n and 0 == self.n % self.resp_nstep:
             # calculate the respiratory rate
             freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-            self.RespQueue.put({'freqs': freqs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri':np.array(self.resp.rri)})
+            self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri':np.array(self.resp.rri)})
             self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
 
              

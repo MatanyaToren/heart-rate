@@ -14,20 +14,27 @@ from queue import Queue, Empty
 from time import time
 from app import *
 
+DEFAULT_FS = 30
 
 class VideoThread(QThread):
     changePixmap = pyqtSignal(QImage)
     runs = True
     
-    def __init__(self, App):
+    def __init__(self, App, Fs):
         super().__init__()
         self.App = App
+        self.Fs = Fs
 
     def run(self):
-        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        # cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
+        n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
+            n += 1
+            if n % (DEFAULT_FS//self.Fs) != 0:
+                continue
+            
             if ret:
                 # https://stackoverflow.com/a/55468544/6622587
                 try:
@@ -51,6 +58,7 @@ class VideoThread(QThread):
                 self.changePixmap.emit(p)
                 
             else:
+                print('Video off')
                 break
                 
         cap.release()
@@ -70,6 +78,9 @@ class AppWindow(QWidget):
         self.top = 100
         self.width = 1500
         self.height = 800
+        self.Fs = 10
+        self.n_seonds = 20
+        self.t = np.linspace(start=0, stop=self.n_seonds, num=self.n_seonds*self.Fs, endpoint=False)
         
         self.initUI()
 
@@ -100,30 +111,29 @@ class AppWindow(QWidget):
         
         try:
             filtered_signal = self.App.SignalQueue.get_nowait()
-            N = len(filtered_signal)
-            currTime = N/self.App.Fs
-            t = np.linspace(start=0, stop=currTime, num=N, endpoint=False)
-            ppgLine.set_data(t, filtered_signal)
-            self.ppgAx.set_ylim([filtered_signal[-10*self.App.Fs:].min(), filtered_signal[-10*self.App.Fs:].max()])
-            self.ppgAx.set_xlim([currTime-10, currTime])
+            # N = len(filtered_signal)
+            # currTime = N/self.App.Fs
+            # t = np.linspace(start=0, stop=currTime, num=N, endpoint=False)
+            ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seonds*self.App.Fs:])
+            self.ppgAx.set_ylim([filtered_signal[-self.n_seonds*self.App.Fs:].min(), filtered_signal[-self.n_seonds*self.App.Fs:].max()])
+            # self.ppgAx.set_xlim([currTime-10, currTime])
         
-        except Empty:
-            pass
+        # except Empty:
+        #     pass
         
-        try:
+        # try:
             newData = self.App.RespQueue.get_nowait()
             rri = newData['rri']/self.App.Fs
             
-            filtered_signal = ppgLine.get_ydata()
-            t = ppgLine.get_xdata()
-            currTime = t[-1]
+            shift_indx = max(0, filtered_signal.shape[0]-self.n_seonds*self.App.Fs)
+            peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx] - shift_indx
             
-            maxLine.set_data(t[newData['peak_times']], filtered_signal[newData['peak_times']])
-            rriLine.set_data(t[newData['peak_times']], rri)
+            maxLine.set_data(self.t[peak_times], filtered_signal[newData['peak_times']])
+            rriLine.set_data(self.t[peak_times], rri[shift_indx:])
             lombLine.set_data(newData['freqs'], newData['pgram'])
             
-            self.rriAx.set_ylim([0, rri.max()])
-            self.rriAx.set_xlim([currTime-30, currTime])
+            self.rriAx.set_ylim([0, rri[shift_indx:].max()])
+            # self.rriAx.set_xlim([currTime-20, currTime])
             
             # self.lombAx.relim()
             # self.lombAx.autoscale_view()
@@ -167,17 +177,18 @@ class AppWindow(QWidget):
         self.WelchAx.set_xlabel('bpm')
         self.WelchAx.set_title('welch periodogram')
         self.WelchAx.set_xlim([0, 180])
-        self.WelchAx.set_ylim([0, 1])
+        self.WelchAx.set_ylim([0, 1.1])
         
         
         self.ppgAx, self.rriAx, self.lombAx = self.RespFig.subplots(nrows=3, ncols=1)
         self.ppgAx.plot([],[])
         self.ppgAx.plot([], [], "x")
-        self.ppgAx.set_xlim([0, 60])
+        self.ppgAx.set_xlim([0, self.n_seonds])
         self.ppgAx.set_xlabel('time')
         self.ppgAx.set_title('ppg signal')
 
         self.rriAx.plot([], [])
+        self.rriAx.set_xlim([0, self.n_seonds])
         self.rriAx.set_xlabel('time')
         self.rriAx.set_ylabel('rri')
         self.rriAx.set_title('rri signal')
@@ -189,12 +200,12 @@ class AppWindow(QWidget):
         self.WelchFig.tight_layout()
         self.RespFig.tight_layout()
         
-        self.App = App()
+        self.App = App(Fs=self.Fs)
         
-        self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=False, interval=100) 
-        self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=False, interval=100)
+        self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
+        self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
         
-        self.VideoSource = VideoThread(self.App)
+        self.VideoSource = VideoThread(self.App, Fs=self.Fs)
         self.VideoSource.changePixmap.connect(self.setImage)
         self.VideoSource.finished.connect(self.close)
         self.VideoSource.start()
