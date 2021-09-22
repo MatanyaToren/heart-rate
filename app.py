@@ -3,6 +3,7 @@ import scipy.signal as signal
 from threading import Thread
 from queue import Queue, Empty
 from tracking import *
+from get_roi import *
 from welch_update import *
 from respiratory_rate import *
 
@@ -43,6 +44,7 @@ class App():
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
         
         self.tracker = FaceTracker()
+        self.roi_finder = roi()
         self.resp = respiratory(n_beats = 60, distance = int(2*Fs/3))
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
 
@@ -84,6 +86,9 @@ class App():
         get signal from roi
         """
         x, y, w, h = self.bbox
+        
+        if self.n % 30 == 0:
+            self.offset_x, self.offset_y, self.size_x, self.size_y = self.roi_finder.get_roi(frame, self.bbox)
         
         x_bb = int(x + self.offset_x * w)
         w_bb = int(w * self.size_x)
