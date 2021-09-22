@@ -78,9 +78,10 @@ class AppWindow(QWidget):
         self.top = 100
         self.width = 1500
         self.height = 800
-        self.Fs = 10
+        self.Fs = 15
         self.n_seonds = 20
         self.t = np.linspace(start=0, stop=self.n_seonds, num=self.n_seonds*self.Fs, endpoint=False)
+        self.t_rri = np.linspace(start=0, stop=2*self.n_seonds, num=2*self.n_seonds*self.Fs, endpoint=False)
         self.newData = None
         
         self.initUI()
@@ -128,11 +129,13 @@ class AppWindow(QWidget):
                 
             
             shift_indx = max(0, filtered_signal.shape[0]-self.n_seonds*self.App.Fs)
+            shift_indx_rri = max(0, filtered_signal.shape[0]-2*self.n_seonds*self.App.Fs)
             peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx]
-            rri = newData['rri'][-len(peak_times):]/self.App.Fs
+            peak_times_rri = newData['peak_times'][newData['peak_times'] >= shift_indx_rri]
+            rri = newData['rri'][-len(peak_times_rri):]/self.App.Fs
             
             maxLine.set_data(self.t[peak_times-shift_indx], filtered_signal[peak_times])
-            rriLine.set_data(self.t[peak_times-shift_indx], rri)
+            rriLine.set_data(self.t_rri[peak_times_rri-shift_indx_rri], rri)
             lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
             self.rriAx.set_ylim([0, rri.max()])
@@ -188,7 +191,7 @@ class AppWindow(QWidget):
         self.ppgAx.set_title('ppg signal')
 
         self.rriAx.plot([], [])
-        self.rriAx.set_xlim([0, self.n_seonds])
+        self.rriAx.set_xlim([0, 2*self.n_seonds])
         self.rriAx.set_xlabel('time')
         self.rriAx.set_ylabel('rri')
         self.rriAx.set_title('rri signal')
