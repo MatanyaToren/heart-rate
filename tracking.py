@@ -81,6 +81,7 @@ class FaceTracker():
         if ok:
             self.bbox = bbox
         else:
+            self.lastDetection = False
             raise TrackingError()
 
         # need to check if bbox boundaries are within frame

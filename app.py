@@ -58,9 +58,10 @@ class App():
         self.get_signal(frame)
         self.n += 1
         
-        if 0 < self.n and 0 == self.n % 10:
-            filtered_chunk, self.z = signal.lfilter(self.bandPass, 1, self.raw_signal[-10:], zi=self.z)
-            self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
+        if self.bandPass.shape[0] <= self.n and 0 == self.n % 10:
+            # filtered_chunk, self.z = signal.lfilter(self.bandPass, 1, self.raw_signal[-10:], zi=self.z)
+            # self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
+            self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.bandPass.shape[0]))
             self.SignalQueue.put(self.filtered_signal)
 
         if self.nperseg <= self.n and 0 == self.n % self.nstep:
