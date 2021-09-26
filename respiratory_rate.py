@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import scipy
 import scipy.signal as signal
 import matplotlib.pyplot as plt
 
@@ -38,7 +39,7 @@ class respiratory():
         """
         find ppg peaks
         """
-        peaks, _ = signal.find_peaks(ppg, distance=self.distance)
+        peaks, _ = signal.find_peaks(ppg, distance=self.distance, prominence=0.5)
         self.peak_times.extend((peaks+self.time).tolist()[1:])
         self.rri.extend(np.diff(peaks).tolist())
         self.time += len(ppg)

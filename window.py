@@ -26,8 +26,8 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
-        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        # cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
         n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
