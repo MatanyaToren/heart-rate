@@ -1,9 +1,10 @@
 To Do:
 1. move roi finder to tracking module so bbox and roi would be synchronized
-2. add more rois
+2. add more rois in both cheaks and forehaed
 3. compute snr
 4. maybe check out if POS (Plane Orthogonal to Skin) method works
+5. smooth estimation of heart rate and respiratory rate using maybe kalman filter
 
 later:
-5. find paper with clear comparison method and suiting databse
-6. implement script to evaluate our method
+6. find paper with clear comparison method and suiting databse
+7. implement script to evaluate our method
