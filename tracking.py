@@ -114,6 +114,7 @@ class FaceTracker():
 
         if x+w >= width or y+h >= hight or x < 0 or y < 0:
             self.lastDetection = False
+            # print('bbox out of frame')
             raise OutOfFrameError()
         
 

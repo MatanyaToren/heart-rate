@@ -26,8 +26,8 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        # cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
+        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
         n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
@@ -78,7 +78,7 @@ class AppWindow(QWidget):
         self.top = 100
         self.width = 1500
         self.height = 800
-        self.Fs = 15
+        self.Fs = 30
         self.n_seonds = 20
         self.t = np.linspace(start=0, stop=self.n_seonds, num=self.n_seonds*self.Fs, endpoint=False)
         self.t_rri = np.linspace(start=0, stop=2*self.n_seonds, num=2*self.n_seonds*self.Fs, endpoint=False)
@@ -115,8 +115,13 @@ class AppWindow(QWidget):
             filtered_signal = self.App.SignalQueue.get_nowait()
       
             ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seonds*self.App.Fs:])
-            self.ppgAx.set_ylim([filtered_signal[-self.n_seonds*self.App.Fs:].min(), filtered_signal[-self.n_seonds*self.App.Fs:].max()])
-
+            try:
+                self.ppgAx.set_ylim([filtered_signal[-self.n_seonds*self.App.Fs:].min(), filtered_signal[-self.n_seonds*self.App.Fs:].max()])
+            except ValueError:
+                print('max:', filtered_signal[-self.n_seonds*self.App.Fs:].max())
+                print('min:', filtered_signal[-self.n_seonds*self.App.Fs:].min())
+                # print(filtered_signal)
+                
             try:
                 newData = self.App.RespQueue.get_nowait()
                 self.newData = newData
@@ -138,7 +143,7 @@ class AppWindow(QWidget):
             rriLine.set_data(self.t_rri[peak_times_rri-shift_indx_rri], rri)
             lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
-            self.rriAx.set_ylim([0, rri.max()])
+            self.rriAx.set_ylim([rri.min(), rri.max()])
             self.lombAx.set_ylim([0, newData['pgram'].max()])
             
         except Empty:

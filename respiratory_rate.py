@@ -49,6 +49,9 @@ class respiratory():
         main calculation of respiratory rate
         """
         peaks = self.find_peaks(ppg)
+        if peaks.shape[0] == 0:
+            raise RuntimeError
+        
         self.freqs, self.pgram = self.esitmate_res_rate()
 
         if self.fig is not None:

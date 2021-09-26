@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 
 class roi():
-    def __init__(self):
+    def __init__(self, type='left'):
         LBFmodel_file = "data/LFBmodel.yaml"
         self.landmark_detector  = cv2.face.createFacemarkLBF()
         self.landmark_detector.loadModel(LBFmodel_file)

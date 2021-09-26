@@ -178,7 +178,7 @@ def processor():
         # spatial mean of the bounding box of the face
         if w_bb == 0 or h_bb == 0:
             raise RuntimeError('slice is empty')
-        raw_signal.append(np.mean(frame[x_bb:x_bb+w_bb, y_bb:y_bb+w_bb, 1][:]))
+        raw_signal.append(np.mean(frame[y_bb:y_bb+h_bb+1, x_bb:x_bb+w_bb+1, 1][:]))
 
         if 0 < len(raw_signal) and 0 == len(raw_signal) % 10:
             filtered_chunk, z = signal.lfilter(bandPass, 1, raw_signal[-10:], zi=z)

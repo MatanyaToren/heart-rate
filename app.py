@@ -45,7 +45,7 @@ class App():
         
         self.tracker = FaceTracker()
         self.roi_finder = roi()
-        self.resp = respiratory(n_beats = 60, distance = int(2*Fs/3))
+        self.resp = respiratory(n_beats = 60, distance = int(1*Fs/3))
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
 
            
@@ -65,19 +65,23 @@ class App():
             # self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
             self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.bandPass.shape[0]))
             self.SignalQueue.put(self.filtered_signal)
+            
 
-        if self.nperseg <= self.n and 0 == self.n % self.nstep:
+        if max(self.nperseg, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.nstep:
             f, pxx = self.welch_obj.update(self.filtered_signal[-self.nperseg:])
             self.WelchQueue.put((f, pxx))
             self.HeartRate = f[np.argmax(pxx)] * 60
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
 
-        if self.resp_nstep <= self.n and 0 == self.n % self.resp_nstep:
+        if max(self.resp_nstep, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.resp_nstep:
             # calculate the respiratory rate
-            freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-            self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
-            self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
+            try:
+                freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
+                self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
+                self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
+            except RuntimeError:
+                print('no peaks were found')
 
              
             
@@ -87,19 +91,22 @@ class App():
         """
         x, y, w, h = self.bbox
         
-        if self.n % 30 == 0:
-            self.offset_x, self.offset_y, self.size_x, self.size_y = self.roi_finder.get_roi(frame, self.bbox)
+        if self.n % 60 == 0:
+            self.offset_x, self.offset_y, self.size_x, self.size_y = self.roi_finder.get_roi(frame, self.bbox)    
         
-        x_bb = int(x + self.offset_x * w)
-        w_bb = int(w * self.size_x)
-        y_bb = int(y + self.offset_y * h)
-        h_bb = int(h * self.size_y)
+        x_roi = int(x + self.offset_x * w)
+        w_roi = int(w * self.size_x)
+        y_roi = int(y + self.offset_y * h)
+        h_roi = int(h * self.size_y)
+            
         
-        self.roi = (x_bb, y_bb, w_bb, h_bb)
+        self.roi = (x_roi, y_roi, w_roi, h_roi)
         
         # spatial mean of the bounding box of the face
-        self.raw_signal.append(np.mean(frame[x_bb:x_bb+w_bb, y_bb:y_bb+w_bb, 1][:]))
-        
+        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:])
+        self.raw_signal.append(newSample)
+
+            
     
     def quit(self):
         pass
