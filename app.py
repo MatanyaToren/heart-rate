@@ -103,8 +103,10 @@ class App():
         
         self.roi = (x_roi, y_roi, w_roi, h_roi)
         
-        # spatial mean of the bounding box of the face
-        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:])
+        # spatial mean of the bounding box of the face, with red-green difference
+        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) \
+                    - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
+                    
         self.raw_signal.append(newSample)
 
             
