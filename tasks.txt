@@ -1,11 +1,9 @@
-בעיות בפרוייקט:
+To Do:
+1. move roi finder to tracking module so bbox and roi would be synchronized
+2. add more rois
+3. compute snr
+4. maybe check out if POS (Plane Orthogonal to Skin) method works
 
-1. צריך לסדר מחדש את הקוד, ליצור פונקציות לכל תת משימה.
-
-2. לטפל בבעיה שהROI יוצא מקצוות התמונה.
-
-3. להבין למה הwelch רועש.
-
-4. להבין אין להציג את הגרפים בלי דיליי.
-
-5. מדד נוסף - קצב נשימות.
+later:
+5. find paper with clear comparison method and suiting databse
+6. implement script to evaluate our method
