@@ -41,7 +41,7 @@ class App():
         self.filtered_signal = []
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
-        self.z = 4*np.ones(self.bandPass.shape[-1]-1)
+        self.narrowBandPass = signal.firwin(200, np.array([70-20, 70+20])/60, fs=Fs, pass_zero=False)
         
         self.tracker = FaceTracker()
         self.roi_finder = roi()
@@ -64,21 +64,24 @@ class App():
             # filtered_chunk, self.z = signal.lfilter(self.bandPass, 1, self.raw_signal[-10:], zi=self.z)
             # self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
             self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.bandPass.shape[0]))
-            self.SignalQueue.put(self.filtered_signal)
+            self.narrow_filtered_signal = signal.filtfilt(self.narrowBandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.narrowBandPass.shape[0]))
+            self.SignalQueue.put(self.narrow_filtered_signal)
             
 
         if max(self.nperseg, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.nstep:
             f, pxx = self.welch_obj.update(self.filtered_signal[-self.nperseg:])
             self.WelchQueue.put((f, pxx))
-            self.HeartRate = f[np.argmax(pxx)] * 60
-            # print(HeartRate)
-            # print(f.shape, f[np.argmax(pxx)])
+            self.HeartRate = f[np.argmax(pxx * np.logical_and(f >= self.min_bpm/60, f <= self.max_bpm/60))] * 60
+            
+            # update narrow bandPass filter
+            self.narrowBandPass = signal.firwin(200, np.array([self.HeartRate-20, self.HeartRate+20])/60, fs=self.Fs, pass_zero=False)
+          
 
         if max(self.resp_nstep, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.resp_nstep:
             # calculate the respiratory rate
             try:
-                freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-                pgram = pgram * scipy.stats.norm(14/60, 16/60).pdf(freqs*self.Fs)
+                freqs, pgram = self.resp.main(self.narrow_filtered_signal[-self.resp_nstep:])
+                pgram = pgram * scipy.stats.norm(14/60, 8/60).pdf(freqs*self.Fs)
                 self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
                 self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
             except RuntimeError:
