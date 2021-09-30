@@ -2,19 +2,21 @@ import numpy as np
 import cv2
 import scipy
 import scipy.signal as signal
+from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
 
 class respiratory():
     """
     class for estimating resipratory rate from rppg signal
     """
-    def __init__(self, n_beats, distance=7, display=False):
+    def __init__(self, n_beats, distance=7, fs=30, nwindows=6, display=False):
         self.peak_times = []
         self.rri = []
-        self.freqs = []
+        self.freqs = np.linspace(start=0.001, stop=40/fs/60, num=160, endpoint=False)
         self.pgrams = []
         self.time = 0
         self.distance = distance
+        self.nwindows = nwindows
 
         # self.freqs = freqs
         self.n_beats = n_beats
@@ -53,12 +55,16 @@ class respiratory():
         if peaks.shape[0] == 0:
             raise RuntimeError
         
-        self.freqs, self.pgram = self.esitmate_res_rate()
-
+        freqs, pgram = self.esitmate_res_rate()
+        pgram_func = interp1d(freqs, pgram, bounds_error=False, fill_value='extrapolate')
+        self.pgrams.append(pgram_func(self.freqs))
+        if len(self.pgrams) > self.nwindows:
+            del self.pgrams[0]
+        
         if self.fig is not None:
             self.update_plot(ppg, peaks)
 
-        return self.freqs, self.pgram
+        return self.freqs, np.mean(self.pgrams, axis=0)
 
     def esitmate_res_rate(self):
         """
