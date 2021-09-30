@@ -45,8 +45,8 @@ class App():
         
         self.tracker = FaceTracker()
         self.roi_finder = roi()
-        self.resp = respiratory(n_beats = 80, distance = int(1*Fs/3))
-        self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
+        self.resp = respiratory(n_beats=40, distance=int(1*Fs/3), nwindows=8)
+        self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=30, nfft=Fs*60)
 
            
         
