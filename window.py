@@ -197,12 +197,14 @@ class AppWindow(QWidget):
 
         self.rriAx.plot([], [])
         self.rriAx.set_xlim([0, 2*self.n_seonds])
+        self.rriAx.set_ylim([0, 1.1])
         self.rriAx.set_xlabel('time')
         self.rriAx.set_ylabel('rri')
         self.rriAx.set_title('rri signal')
         
         self.lombAx.plot([], [])
         self.lombAx.set_xlim([0, 40])
+        self.lombAx.set_ylim([0, 1.1])
         self.lombAx.set_xlabel('breaths per minute')
         self.lombAx.set_title('lomb periogogram')
         
