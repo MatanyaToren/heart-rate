@@ -78,7 +78,7 @@ class App():
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-                pgram = pgram * scipy.stats.norm(14/60, 5/60).pdf(freqs*self.Fs)
+                pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
                 self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
                 self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
             except RuntimeError:
@@ -104,8 +104,8 @@ class App():
         self.roi = (x_roi, y_roi, w_roi, h_roi)
         
         # spatial mean of the bounding box of the face
-        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) \
-                    - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
+        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) #\
+                    # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
         self.raw_signal.append(newSample)
 
             
