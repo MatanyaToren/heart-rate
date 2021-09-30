@@ -26,8 +26,8 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        # cap = cv2.VideoCapture('videos/56bpm_17_08.mp4')
+        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
         n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
@@ -48,8 +48,8 @@ class VideoThread(QThread):
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
                 
-                cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
+                cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,60), cv2.FONT_HERSHEY_SIMPLEX, 3*0.75,(0,0,255),4)
+                cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate), (40,140), cv2.FONT_HERSHEY_SIMPLEX, 3*0.75,(0,0,255),4)     
                 rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgbImage.shape
                 bytesPerLine = ch * w
@@ -197,12 +197,14 @@ class AppWindow(QWidget):
 
         self.rriAx.plot([], [])
         self.rriAx.set_xlim([0, 2*self.n_seonds])
+        self.rriAx.set_ylim([0, 1.1])
         self.rriAx.set_xlabel('time')
         self.rriAx.set_ylabel('rri')
         self.rriAx.set_title('rri signal')
         
         self.lombAx.plot([], [])
         self.lombAx.set_xlim([0, 40])
+        self.lombAx.set_ylim([0, 1.1])
         self.lombAx.set_xlabel('breaths per minute')
         self.lombAx.set_title('lomb periogogram')
         
