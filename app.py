@@ -6,6 +6,7 @@ from tracking import *
 from get_roi import *
 from welch_update import *
 from respiratory_rate import *
+from pos import *
 
 
 class SampleError(RuntimeError):
@@ -37,7 +38,7 @@ class App():
         self.HeartRate = 0
         self.RespRate = 0
         self.n = 0
-        self.raw_signal = []
+        self.raw_signal = pos()
         self.filtered_signal = []
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
@@ -45,7 +46,7 @@ class App():
         
         self.tracker = FaceTracker()
         self.roi_finder = roi()
-        self.resp = respiratory(n_beats = 100, distance = int(1*Fs/3))
+        self.resp = respiratory(n_beats = 100, distance = int(Fs/2))
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
 
            
@@ -63,7 +64,7 @@ class App():
         if self.bandPass.shape[0] <= self.n and 0 == self.n % 10:
             # filtered_chunk, self.z = signal.lfilter(self.bandPass, 1, self.raw_signal[-10:], zi=self.z)
             # self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
-            self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.bandPass.shape[0]))
+            self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal.signal[:].copy(), padlen=min(self.n-2, 3*self.bandPass.shape[0]))
             self.SignalQueue.put(self.filtered_signal)
             
 
@@ -78,7 +79,7 @@ class App():
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-                pgram = pgram * scipy.stats.norm(14/60, 16/60).pdf(freqs*self.Fs)
+                pgram = pgram * scipy.stats.norm(14/60, 8/60).pdf(freqs*self.Fs)
                 self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
                 self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
             except RuntimeError:
@@ -104,7 +105,7 @@ class App():
         self.roi = (x_roi, y_roi, w_roi, h_roi)
         
         # spatial mean of the bounding box of the face
-        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:])
+        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, ::-1], axis=(0,1))
         self.raw_signal.append(newSample)
 
             
