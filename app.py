@@ -46,11 +46,7 @@ class App():
         
         self.tracker = FaceTracker()
         self.roi_finder = roi()
-<<<<<<< HEAD
-        self.resp = respiratory(n_beats = 100, distance = int(Fs/2))
-=======
         self.resp = respiratory(n_beats = 80, distance = int(1*Fs/3))
->>>>>>> master
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
 
            
@@ -83,11 +79,7 @@ class App():
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-<<<<<<< HEAD
-                pgram = pgram * scipy.stats.norm(14/60, 8/60).pdf(freqs*self.Fs)
-=======
                 pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
->>>>>>> master
                 self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
                 self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
             except RuntimeError:
@@ -113,12 +105,7 @@ class App():
         self.roi = (x_roi, y_roi, w_roi, h_roi)
         
         # spatial mean of the bounding box of the face
-<<<<<<< HEAD
         newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, ::-1], axis=(0,1))
-=======
-        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) #\
-                    # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
->>>>>>> master
         self.raw_signal.append(newSample)
 
             
