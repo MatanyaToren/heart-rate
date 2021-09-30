@@ -41,7 +41,7 @@ class respiratory():
         """
         find ppg peaks
         """
-        peaks, _ = signal.find_peaks(ppg, distance=self.distance, prominence=0.1)
+        peaks, _ = signal.find_peaks(ppg, distance=self.distance, prominence=0.2)
         self.peak_times.extend((peaks+self.time).tolist()[1:])
         self.rri.extend(np.diff(peaks).tolist())
         self.time += len(ppg)

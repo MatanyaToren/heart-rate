@@ -15,9 +15,9 @@ class pos():
     
     P : np.ndarray = np.array([[0, 1, -1], [-2, 1, 1]]).T     # projection matrix
     
-    def __init__(self):
+    def __init__(self, fs=30):
         self.n : int = 0     # counter
-        self.l : int = 60 #48    # segment size
+        self.l : int = int(fs*1.5) #48    # segment size
         self.m : int = self.n-self.l+1
         self.inputSignal : DynamicArray = DynamicArray(array_or_shape=(None,3), capacity=200)
         self.signal : DynamicArray = DynamicArray(np.zeros(self.l-1), capacity=200)
