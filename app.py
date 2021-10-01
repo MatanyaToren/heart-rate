@@ -23,10 +23,9 @@ class App():
     
     
         self.min_bpm, self.max_bpm = min_bpm, max_bpm
-        self.offset_x = 0.1
-        self.offset_y = 0.6
-        self.size_x = 0.2
-        self.size_y = 0.2
+        self.offsets = [(0.1, 0.6, 0.2, 0.2), 
+                        (0.7, 0.6, 0.2, 0.2), 
+                        (0.3, 0.0, 0.2, 0.2)]
         self.Fs = Fs
         self.nperseg = 12 * Fs
         self.noverlap = 10 * Fs
@@ -44,7 +43,7 @@ class App():
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
         
         self.tracker = FaceTracker()
-        self.roi_finder = roi()
+        self.roi_finder = roi(types=['all'])
         self.resp = respiratory(n_beats=60, distance=int(Fs/2), nwindows=4)
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
 
@@ -93,19 +92,22 @@ class App():
         x, y, w, h = self.bbox
         
         if self.n % 60 == 0:
-            self.offset_x, self.offset_y, self.size_x, self.size_y = self.roi_finder.get_roi(frame, self.bbox)    
+            self.offsets = self.roi_finder.get_roi(frame, self.bbox)    
         
-        x_roi = int(x + self.offset_x * w)
-        w_roi = int(w * self.size_x)
-        y_roi = int(y + self.offset_y * h)
-        h_roi = int(h * self.size_y)
+        newSample = 0
+        self.rois = []
+        for (offset_x, offset_y, size_x, size_y) in self.offsets:
+            x_roi = int(x + offset_x * w)
+            w_roi = int(w * size_x)
+            y_roi = int(y + offset_y * h)
+            h_roi = int(h * size_y)
             
-        
-        self.roi = (x_roi, y_roi, w_roi, h_roi)
-        
-        # spatial mean of the bounding box of the face
-        newSample = np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) #\
-                    # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
+            self.rois.append((x_roi, y_roi, w_roi, h_roi))
+            
+            # spatial mean of the bounding box of the face
+            newSample += np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) #\
+                        # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
+                        
         self.raw_signal.append(newSample)
 
             

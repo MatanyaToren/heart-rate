@@ -40,9 +40,10 @@ class VideoThread(QThread):
                 try:
                     self.App.new_sample(frame)
                     x, y, width, height = self.App.bbox
-                    x_bb, y_bb, w_bb, h_bb = self.App.roi
-                    cv2.rectangle(frame, (int(x), int(y)), (int(x+width), int(y+height)), (0, 255, 0), 2, 1)
-                    cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2)
+                    for (x_bb, y_bb, w_bb, h_bb) in self.App.rois:
+                        cv2.rectangle(frame, (int(x), int(y)), (int(x+width), int(y+height)), (0, 255, 0), 2, 1)
+                        cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2)
+                        
                     frameRect =  cv2.flip(frame, 1)
 
                 except SampleError as err:
