@@ -70,7 +70,13 @@ class respiratory():
         """
         use time differences between peaks to estimate resipratory rate
         """
-        f, pgram = respiratory.lomb(self.peak_times[-self.n_beats:], self.rri[-self.n_beats:])
+        if len(self.rri[-self.n_beats:]) > 0:
+            f, pgram = respiratory.lomb(self.peak_times[-self.n_beats:], self.rri[-self.n_beats:])
+            
+        else:
+            f = self.freqs
+            pgram = np.zeros(f.shape)
+            
         return f, pgram
 
     
