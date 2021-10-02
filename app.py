@@ -44,7 +44,7 @@ class App():
         
         self.tracker = FaceTracker()
         self.roi_finder = roi(types=['all'])
-        self.resp = respiratory(n_beats=60, distance=int(Fs/2), nwindows=4)
+        self.resp = respiratory(n_beats=40, distance=int(Fs/2), nwindows=6)
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
 
            
@@ -77,7 +77,7 @@ class App():
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-                # pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
+                pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
                 self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
                 self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
             except RuntimeError:

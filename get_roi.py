@@ -47,9 +47,9 @@ class roi():
                 
             elif type == 'forehead':
                 w = landmark[0,23,0] - landmark[0,20,0]
-                h = landmark[0,29,1] - landmark[0,27,1]
+                h = landmark[0,29,1] - landmark[0,26,1]
                 x = landmark[0,20,0]
-                y = landmark[0,19,1] - h
+                y = landmark[0,19,1] - int(h * 1.2) 
                 
                 
             else:
