@@ -80,9 +80,9 @@ class AppWindow(QWidget):
         self.width = 1500
         self.height = 800
         self.Fs = 30
-        self.n_seonds = 20
-        self.t = np.linspace(start=0, stop=self.n_seonds, num=self.n_seonds*self.Fs, endpoint=False)
-        self.t_rri = np.linspace(start=0, stop=2*self.n_seonds, num=2*self.n_seonds*self.Fs, endpoint=False)
+        self.n_seconds = 20
+        self.t = np.linspace(start=0, stop=self.n_seconds, num=self.n_seconds*self.Fs, endpoint=False)
+        self.t_rri = np.linspace(start=0, stop=2*self.n_seconds, num=2*self.n_seconds*self.Fs, endpoint=False)
         self.newData = None
         
         self.initUI()
@@ -115,12 +115,12 @@ class AppWindow(QWidget):
         try:
             filtered_signal = self.App.SignalQueue.get_nowait()
       
-            ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seonds*self.App.Fs:])
+            ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seconds*self.App.Fs:])
             try:
-                self.ppgAx.set_ylim([filtered_signal[-self.n_seonds*self.App.Fs:].min(), filtered_signal[-self.n_seonds*self.App.Fs:].max()])
+                self.ppgAx.set_ylim([filtered_signal[-self.n_seconds*self.App.Fs:].min(), filtered_signal[-self.n_seconds*self.App.Fs:].max()])
             except ValueError:
-                print('max:', filtered_signal[-self.n_seonds*self.App.Fs:].max())
-                print('min:', filtered_signal[-self.n_seonds*self.App.Fs:].min())
+                print('max:', filtered_signal[-self.n_seconds*self.App.Fs:].max())
+                print('min:', filtered_signal[-self.n_seconds*self.App.Fs:].min())
                 # print(filtered_signal)
                 
             try:
@@ -134,8 +134,8 @@ class AppWindow(QWidget):
                     return ppgLine, maxLine, rriLine, lombLine
                 
             
-            shift_indx = max(0, filtered_signal.shape[0]-self.n_seonds*self.App.Fs)
-            shift_indx_rri = max(0, filtered_signal.shape[0]-2*self.n_seonds*self.App.Fs)
+            shift_indx = max(0, filtered_signal.shape[0]-self.n_seconds*self.App.Fs)
+            shift_indx_rri = max(0, filtered_signal.shape[0]-2*self.n_seconds*self.App.Fs)
             peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx]
             peak_times_rri = newData['peak_times'][newData['peak_times'] >= shift_indx_rri]
             rri = newData['rri'][-len(peak_times_rri):]/self.App.Fs
@@ -192,12 +192,12 @@ class AppWindow(QWidget):
         self.ppgAx, self.rriAx, self.lombAx = self.RespFig.subplots(nrows=3, ncols=1)
         self.ppgAx.plot([],[])
         self.ppgAx.plot([], [], "x")
-        self.ppgAx.set_xlim([0, self.n_seonds])
+        self.ppgAx.set_xlim([0, self.n_seconds])
         self.ppgAx.set_xlabel('time')
         self.ppgAx.set_title('ppg signal')
 
         self.rriAx.plot([], [])
-        self.rriAx.set_xlim([0, 2*self.n_seonds])
+        self.rriAx.set_xlim([0, 2*self.n_seconds])
         self.rriAx.set_ylim([0, 1.1])
         self.rriAx.set_xlabel('time')
         self.rriAx.set_ylabel('rri')

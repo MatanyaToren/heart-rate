@@ -119,6 +119,10 @@ class respiratory():
         pxx = signal.lombscargle(t, y, f_ang, precenter=True)
         pxx = pxx * 2 / n
         return f, pxx
+    
+    
+    def set_time(self, time):
+        self.time = time
 
 
 if __name__ == '__main__':

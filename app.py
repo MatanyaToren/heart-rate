@@ -74,6 +74,8 @@ class App():
             # print(f.shape, f[np.argmax(pxx)])
 
         if max(self.resp_nstep, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.resp_nstep:
+            if self.resp.time == 0:
+                self.resp.set_time(max(0, self.n-self.resp_nstep))
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
