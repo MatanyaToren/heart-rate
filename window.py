@@ -144,7 +144,7 @@ class AppWindow(QWidget):
             rriLine.set_data(self.t_rri[peak_times_rri-shift_indx_rri], rri)
             lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
-            self.rriAx.set_ylim([rri.min(), rri.max()])
+            # self.rriAx.set_ylim([rri.min(), rri.max()])
             self.lombAx.set_ylim([0, newData['pgram'].max()])
             
         except Empty:
@@ -198,9 +198,9 @@ class AppWindow(QWidget):
 
         self.rriAx.plot([], [])
         self.rriAx.set_xlim([0, 2*self.n_seconds])
-        self.rriAx.set_ylim([0, 1.1])
+        self.rriAx.set_ylim([0.5, 1.7])
         self.rriAx.set_xlabel('time')
-        self.rriAx.set_ylabel('rri')
+        self.rriAx.set_ylabel('rri [sec]')
         self.rriAx.set_title('rri signal')
         
         self.lombAx.plot([], [])
