@@ -39,6 +39,7 @@ class App():
         self.raw_signal = []
         self.filtered_signal = []
         self.brightness = ([], [], [])
+        self.distance_ratio = ([], [], [])
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
@@ -127,8 +128,17 @@ class App():
 
         return self.brightness
                         
-        
 
+    def get_distance_indicator(self, frame):
+        """
+        This function computes the area ratio between the rois and the frame, for quality assurance purposes
+        """
+        frame_area = frame.shape[0] * frame.shape[1]
+        for (_, _, w_roi, h_roi), ratio in zip(self.rois, self.distance_ratio):
+            roi_area = w_roi * h_roi
+            ratio.append(roi_area / frame_area)
+
+        return self.distance_ratio
             
     
     def quit(self):
