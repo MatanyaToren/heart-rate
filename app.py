@@ -38,6 +38,7 @@ class App():
         self.n = 0
         self.raw_signal = []
         self.filtered_signal = []
+        self.brightness = ([], [], [])
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
@@ -111,6 +112,22 @@ class App():
                         # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
                         
         self.raw_signal.append(newSample)
+
+
+
+    def get_brightness(self, frame):
+        """
+        This function computes the brightness in the rois, for quality assurance purposes
+        """
+        gray = cv2.cvtColor(frame, cv2.BGR2GRAY)
+        for (x_roi, y_roi, w_roi, h_roi), brightness in zip(self.rois, self.brightness):
+            
+            # spatial mean of the bounding box of the face
+            brightness.append(np.mean(gray[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1][:]))
+
+        return self.brightness
+                        
+        
 
             
     
