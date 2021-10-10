@@ -27,8 +27,8 @@ class App():
                         (0.7, 0.6, 0.2, 0.2), 
                         (0.3, 0.0, 0.2, 0.2)]
         self.Fs = Fs
-        self.nperseg = 12 * Fs
-        self.noverlap = 10 * Fs
+        self.nperseg = 20 * Fs
+        self.noverlap = 18 * Fs
         self.nstep = self.nperseg - self.noverlap
         self.resp_nstep = 10 * Fs  # updating rate of the respiratory rate
 
