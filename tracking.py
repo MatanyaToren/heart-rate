@@ -68,7 +68,7 @@ class FaceTracker():
             self.lastDetection = True
             return self.bbox
         
-        except IndexError:
+        except (IndexError, ValueError):
             raise DetectionError()
 
 
