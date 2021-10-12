@@ -57,6 +57,11 @@ class App():
         
         except (TrackingError, OutOfFrameError, DetectionError) as err:
             raise SampleError
+        
+        except JumpingError:
+            print("either you're moving too fast or another face entered the view of the camera,")
+            print("the app supports only one person at a time")
+            raise SampleError
            
         self.get_signal(frame)
         self.n += 1
