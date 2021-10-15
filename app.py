@@ -40,6 +40,7 @@ class App():
         self.filtered_signal = []
         self.brightness = ([], [], [])
         self.distance_ratio = ([], [], [])
+        self.snr = [0]
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
@@ -79,6 +80,7 @@ class App():
             f, pxx = self.welch_obj.update(self.filtered_signal[-self.nperseg:])
             self.WelchQueue.put((f, pxx))
             self.HeartRate = f[np.argmax(pxx)] * 60
+            self.get_snr(pxx, f, self.HeartRate/60)
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
 
@@ -149,6 +151,21 @@ class App():
             ratio.append(roi_area / frame_area)
 
         return self.distance_ratio
+    
+    
+    def get_snr(self, pxx, f, peak):
+        """
+        This function computes the snr of the signal received.txt
+        The snr in this context is defines as the 10*log_10 of the ratio of the Energy of pxx in 
+        the 0.2 Hz around the highest peak and the total energy of the signal
+        """
+        
+        TotalEnergy = pxx.sum()
+        SignalRange = np.logical_and(f > (peak - 0.2), f < (peak + 0.2))
+        SignalEnergy = pxx[SignalRange].sum()
+        snr = 10*np.log10(SignalEnergy / (TotalEnergy - SignalEnergy))
+        self.snr.append(snr)
+        return snr
             
     
     def quit(self):

@@ -55,8 +55,9 @@ class VideoThread(QThread):
                 if len(self.App.brightness[0]) != 0:
                     # display brigness and ratio
                     cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                    cv2.putText(frameRect, "distance ratio: {} bpm".format([int(10000*num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
-                    
+                    cv2.putText(frameRect, "distance ratio: {}".format([int(10000*num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
+                 
+                cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
                 
                 rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgbImage.shape
