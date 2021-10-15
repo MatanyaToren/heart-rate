@@ -89,7 +89,10 @@ class App():
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
                 pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
-                self.RespQueue.put({'freqs': freqs*self.Fs, 'pgram': pgram, 'peak_times': np.array(self.resp.peak_times), 'rri': np.array(self.resp.rri)})
+                self.RespQueue.put({'freqs': freqs*self.Fs, 
+                                    'pgram': pgram, 
+                                    'peak_times': np.array(self.resp.peak_times), 
+                                    'rri': np.array(self.resp.rri)})
                 self.RespRate = freqs[pgram.argmax()] * self.Fs * 60
             except RuntimeError:
                 print('no peaks were found')
