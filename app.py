@@ -64,6 +64,8 @@ class App():
             raise SampleError
            
         self.get_signal(frame)
+        self.get_brightness(frame)
+        self.get_distance_indicator(frame)
         self.n += 1
         
         if self.bandPass.shape[0] <= self.n and 0 == self.n % 10:
@@ -125,7 +127,7 @@ class App():
         """
         This function computes the brightness in the rois, for quality assurance purposes
         """
-        gray = cv2.cvtColor(frame, cv2.BGR2GRAY)
+        gray = cv2.cvtColor(frame, cv2. COLOR_BGR2GRAY)
         for (x_roi, y_roi, w_roi, h_roi), brightness in zip(self.rois, self.brightness):
             
             # spatial mean of the bounding box of the face
