@@ -181,19 +181,23 @@ class AppWindow(QWidget):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.resize(640, 480)
         
-        # add figure for welch periodogram
-        self.WelchFig = Figure(figsize=(7,2)) # width, hight
-        self.WelchCanvas = FigureCanvas(self.WelchFig)
-        self.grid_layout.addWidget(self.WelchCanvas, 2, 0, 1, 2)
+        # # add figure for welch periodogram
+        # self.WelchFig = Figure(figsize=(7,2)) # width, hight
+        # self.WelchCanvas = FigureCanvas(self.WelchFig)
+        # self.grid_layout.addWidget(self.WelchCanvas, 2, 0, 1, 2)
         
         # add figure for respiratory rate
         self.RespFig = Figure(figsize=(7, 9)) #(4,9)
         self.RespCanvas = FigureCanvas(self.RespFig)
         self.grid_layout.addWidget(self.RespCanvas, 0, 2, 3, 2)
         
+        gs = self.RespFig.add_gridspec(3,2)
+        self.hrAx = self.RespFig.add_subplot(gs[0, :])
+        self.ppgAx = self.RespFig.add_subplot(gs[1, :])
+        self.WelchAx = self.RespFig.add_subplot(gs[2, 0])
+        self.lombAx = self.RespFig.add_subplot(gs[2, 1])
         
-        # set up figures
-        self.WelchAx = self.WelchFig.subplots()
+
         self.WelchAx.plot([], [])
         self.WelchAx.set_xlabel('bpm')
         self.WelchAx.set_title('welch periodogram')
@@ -201,19 +205,19 @@ class AppWindow(QWidget):
         self.WelchAx.set_ylim([0, 1.1])
         
         
-        self.ppgAx, self.rriAx, self.lombAx = self.RespFig.subplots(nrows=3, ncols=1)
+        # self.ppgAx, self.rriAx, self.lombAx = self.RespFig.subplots(nrows=3, ncols=2)
         self.ppgAx.plot([],[])
         self.ppgAx.plot([], [], "x")
         self.ppgAx.set_xlim([0, self.n_seconds])
         self.ppgAx.set_xlabel('time')
         self.ppgAx.set_title('ppg signal')
 
-        self.rriAx.plot([], [])
-        self.rriAx.set_xlim([0, 2*self.n_seconds])
-        self.rriAx.set_ylim([0.5, 1.7])
-        self.rriAx.set_xlabel('time')
-        self.rriAx.set_ylabel('rri [sec]')
-        self.rriAx.set_title('rri signal')
+        self.hrAx.plot([], [])
+        self.hrAx.set_xlim([0, 2*self.n_seconds])
+        self.hrAx.set_ylim([0.5, 1.7])
+        self.hrAx.set_xlabel('time')
+        self.hrAx.set_ylabel('hr [bpm]')
+        self.hrAx.set_title('heart-rate signal')
         
         self.lombAx.plot([], [])
         self.lombAx.set_xlim([0, 40])
@@ -221,7 +225,7 @@ class AppWindow(QWidget):
         self.lombAx.set_xlabel('breaths per minute')
         self.lombAx.set_title('lomb periogogram')
         
-        self.WelchFig.tight_layout()
+        # self.WelchFig.tight_layout()
         self.RespFig.tight_layout()
         
         # self.App = App(Fs=self.Fs)
