@@ -165,8 +165,8 @@ class AppWindow(QWidget):
         return ppgLine, maxLine, rriLine, lombLine
     
     def closeEvent(self, event):
-        self.VideoSource.quit()
-        self.VideoSource.wait()
+        # self.VideoSource.quit()
+        # self.VideoSource.wait()
         event.accept()
     
 
@@ -224,15 +224,15 @@ class AppWindow(QWidget):
         self.WelchFig.tight_layout()
         self.RespFig.tight_layout()
         
-        self.App = App(Fs=self.Fs)
+        # self.App = App(Fs=self.Fs)
         
-        self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
-        self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
+        # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
+        # self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
         
-        self.VideoSource = VideoThread(self.App, Fs=self.Fs)
-        self.VideoSource.changePixmap.connect(self.setImage)
-        self.VideoSource.finished.connect(self.close)
-        self.VideoSource.start()
+        # self.VideoSource = VideoThread(self.App, Fs=self.Fs)
+        # self.VideoSource.changePixmap.connect(self.setImage)
+        # self.VideoSource.finished.connect(self.close)
+        # self.VideoSource.start()
     
     
         self.show()
