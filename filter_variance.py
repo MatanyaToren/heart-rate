@@ -5,7 +5,7 @@ class VarianceFilter:
     This class takes samples consecutive samples and leaves out outlying samples
     returns the last inlier sample and if its the newst sample
     """
-    def __init__(self, n_history=100, n_minimal=20, num_sigmas=3):
+    def __init__(self, n_history=100, n_minimal=20, num_sigmas=2):
         self.past_samples = []
         self.n_history = n_history
         self.n_minimal = n_minimal

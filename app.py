@@ -6,6 +6,7 @@ from tracking import *
 from get_roi import *
 from welch_update import *
 from respiratory_rate import *
+from filter_variance import *
 
 
 class SampleError(RuntimeError):
@@ -34,6 +35,7 @@ class App():
 
 
         self.HeartRate = 0
+        self.HeartRateValid = False
         self.RespRate = 0
         self.n = 0
         self.raw_signal = []
@@ -49,6 +51,7 @@ class App():
         self.roi_finder = roi(types=['all'])
         self.resp = respiratory(n_beats=40, distance=int(Fs/2), nwindows=6)
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
+        self.heart_rate_otlier_removal = VarianceFilter()
 
            
         
@@ -79,7 +82,7 @@ class App():
         if max(self.nperseg, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.nstep:
             f, pxx = self.welch_obj.update(self.filtered_signal[-self.nperseg:])
             self.WelchQueue.put((f, pxx))
-            self.HeartRate = f[np.argmax(pxx)] * 60
+            self.HeartRate, self.HeartRateValid = self.heart_rate_otlier_removal.update(f[np.argmax(pxx)] * 60)
             self.get_snr(pxx, f, self.HeartRate/60)
             # print(HeartRate)
             # print(f.shape, f[np.argmax(pxx)])
