@@ -8,3 +8,5 @@ To Do:
 later:
 6. find paper with clear comparison method and suiting databse
 7. implement script to evaluate our method
+
+important: mean of empty slice - needs fixing

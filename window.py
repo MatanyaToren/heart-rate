@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import scipy.signal as signal
 import sys
-from PyQt5.QtWidgets import  QWidget, QLabel, QApplication, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import  QWidget, QLabel, QApplication, QGridLayout, QPushButton, QProgressBar, QStyle
 from PyQt5.QtCore import QThread, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap
 from matplotlib.figure import Figure
@@ -13,6 +13,8 @@ from threading import Thread
 from queue import Queue, Empty
 from time import time
 from app import *
+from QLabeledSpinBox import *
+from QLabeledProgressBar import *
 
 DEFAULT_FS = 30
 
@@ -48,6 +50,9 @@ class VideoThread(QThread):
 
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
+                    
+                except:
+                    pass
                 
                 if self.App.HeartRateValid:
                     cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
@@ -83,8 +88,7 @@ class VideoThread(QThread):
 class AppWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.grid_layout = QGridLayout()
-        self.setLayout(self.grid_layout)
+    
         # location and size of window that opens
         self.title = 'heart-rate'
         self.left = 100
@@ -110,7 +114,7 @@ class AppWindow(QWidget):
         try:
             f, pxx = self.App.WelchQueue.get_nowait()
             WelchLine.set_data(f*60, pxx)
-            self.WelchAx.set_ylim([0, pxx.max()])
+            # self.WelchAx.set_ylim([0, pxx.max()])
             
         except Empty:
             pass
@@ -157,7 +161,7 @@ class AppWindow(QWidget):
             lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
             # self.rriAx.set_ylim([rri.min(), rri.max()])
-            self.lombAx.set_ylim([0, newData['pgram'].max()])
+            # self.lombAx.set_ylim([0, newData['pgram'].max()])
             
         except Empty:
             pass
@@ -171,15 +175,50 @@ class AppWindow(QWidget):
     
 
     def initUI(self):
+        self.grid_layout = QGridLayout()
+        self.setLayout(self.grid_layout)
+        
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         # self.resize(640, 480)
         
         # create a label for live video
         self.label = QLabel(self)
-        self.grid_layout.addWidget(self.label, 0, 0, 2, 2) # row, col, hight, width
+        self.grid_layout.addWidget(self.label, 0, 0, 1, 1) # row, col, hight, width
         self.label.setAlignment(Qt.AlignCenter)
         self.label.resize(640, 480)
+        
+        
+        # organize in grid
+        self.buttons_widget = QWidget()
+        self.buttons_grid = QGridLayout()
+        self.buttons_widget.setLayout(self.buttons_grid)
+        self.grid_layout.addWidget(self.buttons_widget, 1, 0, 2, 1)
+        
+        # add spinbox for welch history
+        self.welchSpinBox = QLabeledSpinBox()
+        self.welchSpinBox.setGeometry(0, 0, 20, 20)
+        self.buttons_grid.addWidget(self.welchSpinBox, 1, 1, 1, 1)
+        
+        # add spinbox for resp history
+        self.respSpinBox = QLabeledSpinBox()
+        self.respSpinBox.setGeometry(0, 0, 20, 20)
+        self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1)
+        
+        # add spinbox for welch window size
+        self.welchWinSizeSpinBox = QLabeledSpinBox()
+        self.welchWinSizeSpinBox.setGeometry(0, 0, 20, 20)
+        self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1)
+        
+        # add reset button
+        self.resetButton = QPushButton('reset')
+        self.resetButton.setGeometry(20, 20, 40, 40)
+        self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1)
+        
+        # progress bar
+        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True)
+        self.buttons_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
+        
         
         # # add figure for welch periodogram
         # self.WelchFig = Figure(figsize=(7,2)) # width, hight
@@ -228,15 +267,15 @@ class AppWindow(QWidget):
         # self.WelchFig.tight_layout()
         self.RespFig.tight_layout()
         
-        # self.App = App(Fs=self.Fs)
+        self.App = App(Fs=self.Fs)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
         # self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
         
-        # self.VideoSource = VideoThread(self.App, Fs=self.Fs)
-        # self.VideoSource.changePixmap.connect(self.setImage)
-        # self.VideoSource.finished.connect(self.close)
-        # self.VideoSource.start()
+        self.VideoSource = VideoThread(self.App, Fs=self.Fs)
+        self.VideoSource.changePixmap.connect(self.setImage)
+        self.VideoSource.finished.connect(self.close)
+        self.VideoSource.start()
     
     
         self.show()
