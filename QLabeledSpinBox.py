@@ -6,17 +6,17 @@ from PyQt5.QtCore import Qt
 
 
 class QLabeledSpinBox(QWidget):
-    def __init__(self, label_txt='label for slider'):
+    def __init__(self, label='label for slider'):
         super().__init__()
         
         self.SpinBox = QSpinBox()
         self.Label = QLabel()
-        self.Label.setText(label_txt)
+        self.Label.setText(label)
         self.Label.setAlignment(Qt.AlignCenter)
         
         self.Box = QVBoxLayout()
-        self.Box.addWidget(self.Label)
-        self.Box.addWidget(self.SpinBox)
+        self.Box.addWidget(self.Label, alignment=Qt.AlignCenter)
+        self.Box.addWidget(self.SpinBox, alignment=Qt.AlignCenter)
         
         self.setLayout(self.Box)
         

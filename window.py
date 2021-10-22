@@ -189,24 +189,30 @@ class AppWindow(QWidget):
         self.label.resize(640, 480)
         
         
-        # organize in grid
+        # organize buttons in grid
         self.buttons_widget = QWidget()
         self.buttons_grid = QGridLayout()
         self.buttons_widget.setLayout(self.buttons_grid)
         self.grid_layout.addWidget(self.buttons_widget, 1, 0, 2, 1)
         
+        # organize ProgressBars in grid
+        self.progressbars_widget = QWidget()
+        self.progressbars_grid = QGridLayout()
+        self.progressbars_widget.setLayout(self.progressbars_grid)
+        self.buttons_grid.addWidget(self.progressbars_widget, 0, 0, 1, 2)
+        
         # add spinbox for welch history
-        self.welchSpinBox = QLabeledSpinBox()
+        self.welchSpinBox = QLabeledSpinBox(label='welch no.\nof windows')
         self.welchSpinBox.setGeometry(0, 0, 20, 20)
         self.buttons_grid.addWidget(self.welchSpinBox, 1, 1, 1, 1)
         
         # add spinbox for resp history
-        self.respSpinBox = QLabeledSpinBox()
+        self.respSpinBox = QLabeledSpinBox(label='welch\nwindow length')
         self.respSpinBox.setGeometry(0, 0, 20, 20)
         self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1)
         
         # add spinbox for welch window size
-        self.welchWinSizeSpinBox = QLabeledSpinBox()
+        self.welchWinSizeSpinBox = QLabeledSpinBox(label='lomb no.\nof windows')
         self.welchWinSizeSpinBox.setGeometry(0, 0, 20, 20)
         self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1)
         
@@ -216,9 +222,27 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1)
         
         # progress bar
-        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True)
-        self.buttons_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
+        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr')
+        self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
+        # progress bar
+        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light')
+        self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
+        
+        # progress bar
+        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='distance')
+        self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
+        
+        # Label for hr and rr data
+        self.HrLabel = QLabel()
+        self.buttons_grid.addWidget(self.HrLabel, 0, 2, 1, 2) # row, col, hight, width
+        self.HrLabel.setAlignment(Qt.AlignCenter)
+        self.HrLabel.setStyleSheet("""QLabel { 
+                                   background-color : white; 
+                                   color : green;
+                                   font-size : 12pt; 
+                                   }""")
+        self.HrLabel.setText('Heart-Rate: 65 [bpm]\n\nBreathing-Rate: 12 [bpm]')
         
         # # add figure for welch periodogram
         # self.WelchFig = Figure(figsize=(7,2)) # width, hight

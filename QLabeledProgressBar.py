@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt
 
 
 class QLabeledProgressBar(QWidget):
-    def __init__(self, label_txt='label for slider', *args, **kwargs):
+    def __init__(self, label='label for slider', *args, **kwargs):
         super().__init__()
         
         self.ProgressBar = QProgressBar(*args, **kwargs)
@@ -21,7 +21,7 @@ class QLabeledProgressBar(QWidget):
         # self.snrLevelBar.setTextVisible(False)
         self.ProgressBar.setFormat('hi')
         self.Label = QLabel()
-        self.Label.setText(label_txt)
+        self.Label.setText(label)
         self.Label.setAlignment(Qt.AlignCenter)
         
         self.Box = QVBoxLayout()
@@ -30,8 +30,6 @@ class QLabeledProgressBar(QWidget):
         
         self.setLayout(self.Box)
         
-    # def connect(self, changeValueFunc):
-    #     self.ProgressBar.connect(changeValueFunc)
         
         
 if __name__ == '__main__':
