@@ -20,6 +20,11 @@ DEFAULT_FS = 30
 
 class VideoThread(QThread):
     changePixmap = pyqtSignal(QImage)
+    changeSnr = pyqtSignal(float)
+    changeLight = pyqtSignal(float)
+    changeMovement = pyqtSignal(float)
+    
+    
     runs = True
     
     def __init__(self, App, Fs):
@@ -74,6 +79,9 @@ class VideoThread(QThread):
                 convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
+                self.changeSnr.emit(self.App.Snr)
+                self.changeLight.emit(self.App.brightness)
+                self.changeMovement.emit(self.App.movement)
                 
             else:
                 print('Video off')
@@ -298,6 +306,9 @@ class AppWindow(QWidget):
         
         self.VideoSource = VideoThread(self.App, Fs=self.Fs)
         self.VideoSource.changePixmap.connect(self.setImage)
+        self.VideoSource.changePixmap.connect(self.self.snrLevelBar.changeValue)
+        self.VideoSource.changePixmap.connect(self.self.brightnessLevel.changeValue)
+        self.VideoSource.changePixmap.connect(self.self.movementLevel.changeValue)
         self.VideoSource.finished.connect(self.close)
         self.VideoSource.start()
     
