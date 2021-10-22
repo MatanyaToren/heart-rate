@@ -55,13 +55,15 @@ class FaceTracker():
             )
 
         try:
-            dis = []
-            for face in faces:
-                dis.append(np.square((face[0]-self.bbox[0])**2 + (face[1]-self.bbox[1])**2))
+            # dis = []
+            # for face in faces:
+            #     dis.append(np.square((face[0]-self.bbox[0])**2 + (face[1]-self.bbox[1])**2))
 
-            self.bbox = faces[np.argmin(dis)]
-            if np.min(dis) / np.square(frame.shape[0]*frame.shape[1]) > 0.1 :
-                raise JumpingError
+            # self.bbox = faces[np.argmin(dis)]
+            self.bbox = faces[0]
+            # if np.min(dis) / np.square(frame.shape[0]*frame.shape[1]) > 0.1 :
+            #     # raise JumpingError
+            #     pass
 
             # need to check if bbox boundaries are within frame
             self.checkBB(frame.shape[:2])

@@ -22,7 +22,7 @@ class VideoThread(QThread):
     changePixmap = pyqtSignal(QImage)
     changeSnr = pyqtSignal(float)
     changeLight = pyqtSignal(float)
-    changeMovement = pyqtSignal(float)
+    changeDistance = pyqtSignal(float)
     
     
     runs = True
@@ -33,8 +33,8 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
-        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        # cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
+        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
         n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
@@ -56,8 +56,9 @@ class VideoThread(QThread):
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
                     
-                except:
-                    pass
+                except Exception as err:
+                    print(err)
+                    frameRect =  cv2.flip(frame, 1)
                 
                 if self.App.HeartRateValid:
                     cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
@@ -69,7 +70,7 @@ class VideoThread(QThread):
                 if len(self.App.brightness[0]) != 0:
                     # display brigness and ratio
                     cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                    cv2.putText(frameRect, "distance ratio: {}".format([int(10000*num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
+                    cv2.putText(frameRect, "distance ratio: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
                  
                 cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
                 
@@ -79,9 +80,11 @@ class VideoThread(QThread):
                 convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
-                self.changeSnr.emit(self.App.Snr)
-                self.changeLight.emit(self.App.brightness)
-                self.changeMovement.emit(self.App.movement)
+                
+                if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
+                    self.changeSnr.emit(self.App.snr[-1])
+                    self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
+                    self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
                 
             else:
                 print('Video off')
@@ -102,7 +105,7 @@ class AppWindow(QWidget):
         self.left = 100
         self.top = 100
         self.width = 1500
-        self.height = 800
+        self.height = 900
         self.Fs = 30
         self.n_seconds = 20
         self.t = np.linspace(start=0, stop=self.n_seconds, num=self.n_seconds*self.Fs, endpoint=False)
@@ -192,7 +195,7 @@ class AppWindow(QWidget):
         
         # create a label for live video
         self.label = QLabel(self)
-        self.grid_layout.addWidget(self.label, 0, 0, 1, 1) # row, col, hight, width
+        self.grid_layout.addWidget(self.label, 0, 0, 1, 2) # row, col, hight, width
         self.label.setAlignment(Qt.AlignCenter)
         self.label.resize(640, 480)
         
@@ -201,7 +204,7 @@ class AppWindow(QWidget):
         self.buttons_widget = QWidget()
         self.buttons_grid = QGridLayout()
         self.buttons_widget.setLayout(self.buttons_grid)
-        self.grid_layout.addWidget(self.buttons_widget, 1, 0, 2, 1)
+        self.grid_layout.addWidget(self.buttons_widget, 1, 0, 3, 2)
         
         # organize ProgressBars in grid
         self.progressbars_widget = QWidget()
@@ -211,34 +214,34 @@ class AppWindow(QWidget):
         
         # add spinbox for welch history
         self.welchSpinBox = QLabeledSpinBox(label='welch no.\nof windows')
-        self.welchSpinBox.setGeometry(0, 0, 20, 20)
+        self.welchSpinBox.setGeometry(0, 0, 40, 20)
         self.buttons_grid.addWidget(self.welchSpinBox, 1, 1, 1, 1)
         
         # add spinbox for resp history
         self.respSpinBox = QLabeledSpinBox(label='welch\nwindow length')
-        self.respSpinBox.setGeometry(0, 0, 20, 20)
+        self.respSpinBox.setGeometry(0, 0, 40, 20)
         self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1)
         
         # add spinbox for welch window size
         self.welchWinSizeSpinBox = QLabeledSpinBox(label='lomb no.\nof windows')
-        self.welchWinSizeSpinBox.setGeometry(0, 0, 20, 20)
+        self.welchWinSizeSpinBox.setGeometry(0, 0, 40, 20)
         self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1)
         
         # add reset button
         self.resetButton = QPushButton('reset')
-        self.resetButton.setGeometry(20, 20, 40, 40)
+        self.resetButton.setFixedSize(90,90)
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1)
         
         # progress bar
-        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr')
+        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr', range=(-5,5))
         self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
         # progress bar
-        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light')
+        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light', range=(0,255))
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar
-        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='distance')
+        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='distance', range=(0,1))
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
         # Label for hr and rr data
@@ -246,7 +249,6 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.HrLabel, 0, 2, 1, 2) # row, col, hight, width
         self.HrLabel.setAlignment(Qt.AlignCenter)
         self.HrLabel.setStyleSheet("""QLabel { 
-                                   background-color : white; 
                                    color : green;
                                    font-size : 12pt; 
                                    }""")
@@ -260,7 +262,7 @@ class AppWindow(QWidget):
         # add figure for respiratory rate
         self.RespFig = Figure(figsize=(7, 9)) #(4,9)
         self.RespCanvas = FigureCanvas(self.RespFig)
-        self.grid_layout.addWidget(self.RespCanvas, 0, 2, 3, 2)
+        self.grid_layout.addWidget(self.RespCanvas, 0, 2, 4, 2)
         
         gs = self.RespFig.add_gridspec(3,2)
         self.hrAx = self.RespFig.add_subplot(gs[0, :])
@@ -306,9 +308,9 @@ class AppWindow(QWidget):
         
         self.VideoSource = VideoThread(self.App, Fs=self.Fs)
         self.VideoSource.changePixmap.connect(self.setImage)
-        self.VideoSource.changePixmap.connect(self.self.snrLevelBar.changeValue)
-        self.VideoSource.changePixmap.connect(self.self.brightnessLevel.changeValue)
-        self.VideoSource.changePixmap.connect(self.self.movementLevel.changeValue)
+        self.VideoSource.changeSnr.connect(self.snrLevelBar.setValue)
+        self.VideoSource.changeLight.connect(self.brightnessLevel.setValue)
+        self.VideoSource.changeDistance.connect(self.distanceLevel.setValue)
         self.VideoSource.finished.connect(self.close)
         self.VideoSource.start()
     

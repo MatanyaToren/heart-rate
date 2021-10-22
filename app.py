@@ -151,7 +151,7 @@ class App():
         frame_area = frame.shape[0] * frame.shape[1]
         for (_, _, w_roi, h_roi), ratio in zip(self.rois, self.distance_ratio):
             roi_area = w_roi * h_roi
-            ratio.append(roi_area / frame_area)
+            ratio.append(roi_area / frame_area * (100))
 
         return self.distance_ratio
     
