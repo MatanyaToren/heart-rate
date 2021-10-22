@@ -6,10 +6,12 @@ from PyQt5.QtCore import Qt
 
 
 class QLabeledSpinBox(QWidget):
-    def __init__(self, label='label for slider'):
+    def __init__(self, label='label for slider', range=(3,10), initValue:int =5):
         super().__init__()
         
         self.SpinBox = QSpinBox()
+        self.SpinBox.setRange(*range)
+        self.SpinBox.setValue(initValue)
         self.Label = QLabel()
         self.Label.setText(label)
         self.Label.setAlignment(Qt.AlignCenter)
