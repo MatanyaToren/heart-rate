@@ -52,7 +52,26 @@ class VideoThread(QThread):
                         cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2)
                         
                     frameRect =  cv2.flip(frame, 1)
+                    
+                    if self.App.HeartRateValid:
+                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
+                    else:
+                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                    
+                    cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
+                    
+                    if len(self.App.brightness[0]) != 0:
+                        # display brigness and ratio
+                        cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                        cv2.putText(frameRect, "distance ratio: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
+                    
+                    cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2) 
 
+                    if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
+                        self.changeSnr.emit(self.App.snr[-1])
+                        self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
+                        self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
+                    
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
                     
@@ -60,19 +79,7 @@ class VideoThread(QThread):
                     print(err)
                     frameRect =  cv2.flip(frame, 1)
                 
-                if self.App.HeartRateValid:
-                    cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
-                else:
-                    cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                
-                cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
-                
-                if len(self.App.brightness[0]) != 0:
-                    # display brigness and ratio
-                    cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                    cv2.putText(frameRect, "distance ratio: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
-                 
-                cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
+    
                 
                 rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
                 h, w, ch = rgbImage.shape
@@ -80,11 +87,6 @@ class VideoThread(QThread):
                 convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
                 p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
-                
-                if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
-                    self.changeSnr.emit(self.App.snr[-1])
-                    self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
-                    self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
                 
             else:
                 print('Video off')

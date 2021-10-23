@@ -60,7 +60,7 @@ class App():
             self.bbox = self.tracker.update(frame)
         
         except (TrackingError, OutOfFrameError, DetectionError) as err:
-            print(err.message)
+            # print(err.message)
             raise SampleError
         
         except JumpingError:
@@ -69,7 +69,7 @@ class App():
             raise SampleError
         except Exception as err:
             print('unknown error in tracking')
-            print(err)
+            # print(err)
            
         self.get_signal(frame)
         self.get_brightness(frame)
