@@ -60,12 +60,16 @@ class App():
             self.bbox = self.tracker.update(frame)
         
         except (TrackingError, OutOfFrameError, DetectionError) as err:
+            print(err.message)
             raise SampleError
         
         except JumpingError:
             print("either you're moving too fast or another face entered the view of the camera,")
             print("the app supports only one person at a time")
             raise SampleError
+        except Exception as err:
+            print('unknown error in tracking')
+            print(err)
            
         self.get_signal(frame)
         self.get_brightness(frame)
@@ -123,9 +127,14 @@ class App():
             
             self.rois.append((x_roi, y_roi, w_roi, h_roi))
             
-            # spatial mean of the bounding box of the face
-            newSample += np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) #\
-                        # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
+            try:
+                # spatial mean of the bounding box of the face
+                newSample += np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 1][:]) #\
+                            # - np.mean(frame[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1, 2][:])
+                            
+            except Exception as err:
+                print(err)
+                
                         
         self.raw_signal.append(newSample)
 
@@ -138,8 +147,15 @@ class App():
         gray = cv2.cvtColor(frame, cv2. COLOR_BGR2GRAY)
         for (x_roi, y_roi, w_roi, h_roi), brightness in zip(self.rois, self.brightness):
             
-            # spatial mean of the bounding box of the face
-            brightness.append(np.mean(gray[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1][:]))
+            try:
+                # spatial mean of the bounding box of the face
+                brightness.append(np.mean(gray[y_roi:y_roi+h_roi+1, x_roi:x_roi+w_roi+1][:]))
+                
+            except RuntimeWarning:
+                brightness.append(0)
+                
+            except Exception as err:
+                print(err)
 
         return self.brightness
                         
@@ -151,7 +167,7 @@ class App():
         frame_area = frame.shape[0] * frame.shape[1]
         for (_, _, w_roi, h_roi), ratio in zip(self.rois, self.distance_ratio):
             roi_area = w_roi * h_roi
-            ratio.append(roi_area / frame_area * (100))
+            ratio.append(roi_area / (frame_area * (100) + 1e-7))
 
         return self.distance_ratio
     
@@ -166,7 +182,7 @@ class App():
         TotalEnergy = pxx.sum()
         SignalRange = np.logical_and(f > (peak - 0.2), f < (peak + 0.2))
         SignalEnergy = pxx[SignalRange].sum()
-        snr = 10*np.log10(SignalEnergy / (TotalEnergy - SignalEnergy))
+        snr = 10*np.log10(SignalEnergy / (TotalEnergy - SignalEnergy + 1e-7))
         self.snr.append(snr)
         return snr
             
