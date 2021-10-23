@@ -33,8 +33,8 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
-        # cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-        cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
+        cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+        # cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
         n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
@@ -102,10 +102,10 @@ class AppWindow(QWidget):
     
         # location and size of window that opens
         self.title = 'heart-rate'
-        self.left = 100
-        self.top = 100
+        self.left = 0
+        self.top = 40
         self.width = 1500
-        self.height = 900
+        self.height = 800
         self.Fs = 30
         self.n_seconds = 20
         self.t = np.linspace(start=0, stop=self.n_seconds, num=self.n_seconds*self.Fs, endpoint=False)
@@ -237,7 +237,7 @@ class AppWindow(QWidget):
         self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
         # progress bar
-        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light', range=(0,255))
+        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light', range=(0,255), format='{:0.0f}')
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar

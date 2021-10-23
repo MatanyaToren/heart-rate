@@ -10,7 +10,7 @@ class QLabeledSpinBox(QWidget):
         super().__init__()
         
         self.SpinBox = QSpinBox()
-        self.SpinBox.setFixedSize(70,70)
+        self.SpinBox.setFixedSize(50,50)
         font = self.SpinBox.font()
         font.setPointSize(20)
         self.SpinBox.setFont(font)

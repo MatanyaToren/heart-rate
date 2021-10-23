@@ -16,7 +16,7 @@ class QLabeledProgressBar(QWidget):
         self.ProgressBar.setOrientation(Qt.Vertical)
         self.ProgressBar.setAlignment(Qt.AlignCenter)
         self.ProgressBar.setRange(*range)
-        self.ProgressBar.setFixedSize(50,200)
+        self.ProgressBar.setFixedSize(40,100)
         self.ProgressBar.setFont(QFont('Arial', 10))
         self.setValue(20)
 
