@@ -60,12 +60,12 @@ class VideoThread(QThread):
                     
                     cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
                     
-                    if len(self.App.brightness[0]) != 0:
-                        # display brigness and ratio
-                        cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                        cv2.putText(frameRect, "distance ratio: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
+                    # if len(self.App.brightness[0]) != 0:
+                    #     # display brigness and ratio
+                    #     cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                    #     cv2.putText(frameRect, "distance ratio: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
                     
-                    cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2) 
+                    # cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2) 
 
                     if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
                         self.changeSnr.emit(self.App.snr[-1])
@@ -78,15 +78,21 @@ class VideoThread(QThread):
                 except Exception as err:
                     print(err)
                     frameRect =  cv2.flip(frame, 1)
+                    
+                except:
+                    print('unknown error while using new frame')
                 
-    
+        
+                try:    
+                    rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
+                    h, w, ch = rgbImage.shape
+                    bytesPerLine = ch * w
+                    convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
+                    p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                    self.changePixmap.emit(p)
                 
-                rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
-                h, w, ch = rgbImage.shape
-                bytesPerLine = ch * w
-                convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-                p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
-                self.changePixmap.emit(p)
+                except:
+                    print('an error ocurred while sending frame to display')
                 
             else:
                 print('Video off')
@@ -235,15 +241,15 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1)
         
         # progress bar
-        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr', range=(-5,5))
+        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr', range=(-5,5), colormap={'green': (0,10), 'red': (-10,0)})
         self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
         # progress bar
-        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light', range=(0,255), format='{:0.0f}')
+        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (150,256), 'red': (0,150)})
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar
-        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='distance', range=(0,1))
+        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='distance', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
         # Label for hr and rr data

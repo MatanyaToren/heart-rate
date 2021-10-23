@@ -15,10 +15,10 @@ class QLabeledProgressBar(QWidget):
         self.ProgressBar = QProgressBar(*args, **kwargs)
         self.ProgressBar.setOrientation(Qt.Vertical)
         self.ProgressBar.setAlignment(Qt.AlignCenter)
-        self.ProgressBar.setRange(*range)
+        self.ProgressBar.setRange(100*range[0], 100*range[1])
         self.ProgressBar.setFixedSize(40,100)
         self.ProgressBar.setFont(QFont('Arial', 10))
-        self.setValue(20)
+        self.setValue(0)
 
         self.Label = QLabel()
         self.Label.setText(label)
@@ -36,7 +36,7 @@ class QLabeledProgressBar(QWidget):
         
         
     def setValue(self, value):
-        self.ProgressBar.setValue(value)
+        self.ProgressBar.setValue(100*value)
         self.ProgressBar.setFormat(self.format.format(value))
         
         for key, (min, max) in self.colormap.items():
