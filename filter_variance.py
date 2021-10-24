@@ -12,6 +12,8 @@ class VarianceFilter:
         self.n = 0
         self.num_sigmas = num_sigmas
         self.valid = True
+        self.lower = 45
+        self.higher = 180
         
     def update(self, sample):
         if self.n < self.n_minimal:
@@ -35,7 +37,9 @@ class VarianceFilter:
         self.mean = np.mean(self.past_samples[-self.n_history:])
         self.std = np.std(self.past_samples[-self.n_history:])
         
-        return (sample <= self.mean + self.num_sigmas*self.std) and (sample >= self.mean - self.num_sigmas*self.std)
+        self.lower = self.mean - self.num_sigmas*self.std
+        self.higher = self.mean + self.num_sigmas*self.std
+        return (sample <= self.higher) and (sample >= self.lower)
     
     
 if __name__ == '__main__':

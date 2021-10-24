@@ -65,12 +65,12 @@ class VideoThread(QThread):
                         
                     frameRect =  cv2.flip(frame, 1)
                     
-                    if self.App.HeartRateValid:
-                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
+                    if self.App.HeartRateValid[-1]:
+                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate[-1]), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
                     else:
-                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
+                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate[-1]), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
                     
-                    cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
+                    cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate[-1]), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
                     
                     # if len(self.App.brightness[0]) != 0:
                     #     # display brigness and ratio
@@ -155,9 +155,24 @@ class AppWindow(QWidget):
     def RespUpdate(self, n):
         
         ppgLine, maxLine = self.ppgAx.get_lines()
-        rriLine, = self.rriAx.get_lines()
+        # rriLine, = self.rriAx.get_lines()
         lombLine, = self.lombAx.get_lines()
+        hrLine, = self.hrAx.get_lines()
+        respLine, = self.respAx.get_lines()
     
+        WelchLine, = self.WelchAx.get_lines()
+        
+        try:
+            WelchData = self.App.WelchQueue.get_nowait()
+            WelchLine.set_data(WelchData['f']*60, WelchData['pxx'])
+            
+            hrLine.set_data(WelchData['HeartRate']-WelchData['HeartRate'][-1]+2*self.n_seconds,
+                            WelchData['HeartRate'])
+            self.WelchAx.set_ylim([0, max(WelchData['pxx'].max(), 1.1)])
+            
+        except Empty:
+            pass
+         
         
         try:
             filtered_signal = self.App.SignalQueue.get_nowait()
@@ -173,31 +188,34 @@ class AppWindow(QWidget):
             try:
                 newData = self.App.RespQueue.get_nowait()
                 self.newData = newData
+                
+                respLine.set_data(newData['RespRateTime']-newData['RespRateTime'][-1]+2*self.n_seconds,
+                            newData['RespRate'])
             
             except Empty:
                 if self.newData is not None:
                     newData = self.newData
                 else:
-                    return ppgLine, maxLine, rriLine, lombLine
+                    return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
                 
             
             shift_indx = max(0, filtered_signal.shape[0]-self.n_seconds*self.App.Fs)
-            shift_indx_rri = max(0, filtered_signal.shape[0]-2*self.n_seconds*self.App.Fs)
+            # shift_indx_rri = max(0, filtered_signal.shape[0]-2*self.n_seconds*self.App.Fs)
             peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx]
-            peak_times_rri = newData['peak_times'][newData['peak_times'] >= shift_indx_rri]
-            rri = newData['rri'][-len(peak_times_rri):]/self.App.Fs
+            # peak_times_rri = newData['peak_times'][newData['peak_times'] >= shift_indx_rri]
+            # rri = newData['rri'][-len(peak_times_rri):]/self.App.Fs
             
             maxLine.set_data(self.t[peak_times-shift_indx], filtered_signal[peak_times])
-            rriLine.set_data(self.t_rri[peak_times_rri-shift_indx_rri], rri)
+            # rriLine.set_data(self.t_rri[peak_times_rri-shift_indx_rri], rri)
             lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
             # self.rriAx.set_ylim([rri.min(), rri.max()])
-            # self.lombAx.set_ylim([0, newData['pgram'].max()])
+            self.lombAx.set_ylim([0, max(newData['pgram'].max(), 1.1)])
             
         except Empty:
             pass
         
-        return ppgLine, maxLine, rriLine, lombLine
+        return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
     
     def closeEvent(self, event):
         # print(event)
@@ -287,6 +305,7 @@ class AppWindow(QWidget):
         
         gs = self.RespFig.add_gridspec(3,2)
         self.hrAx = self.RespFig.add_subplot(gs[0, :])
+        self.respAx = self.hrAx.twinx()
         self.ppgAx = self.RespFig.add_subplot(gs[1, :])
         self.WelchAx = self.RespFig.add_subplot(gs[2, 0])
         self.lombAx = self.RespFig.add_subplot(gs[2, 1])
@@ -306,12 +325,16 @@ class AppWindow(QWidget):
         self.ppgAx.set_xlabel('time')
         self.ppgAx.set_title('ppg signal')
 
-        self.hrAx.plot([], [])
+        self.hrAx.step([], [], color='green')
         self.hrAx.set_xlim([0, 2*self.n_seconds])
-        self.hrAx.set_ylim([0.5, 1.7])
+        self.hrAx.set_ylim([45, 100])
         self.hrAx.set_xlabel('time')
-        self.hrAx.set_ylabel('hr [bpm]')
+        self.hrAx.set_ylabel('hr [bpm]', color='green')
         self.hrAx.set_title('heart-rate signal')
+        
+        self.respAx.step([], [], color='blue')
+        self.respAx.set_ylim([5, 25])
+        self.respAx.set_ylabel('resp. rate [bpm]', color='blue')
         
         self.lombAx.plot([], [])
         self.lombAx.set_xlim([0, 40])
@@ -325,7 +348,7 @@ class AppWindow(QWidget):
         self.App = App(Fs=self.Fs)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
-        # self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
+        self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
         
         self.VideoSource = VideoThread(self.App, Fs=self.Fs)
         self.VideoSource.changePixmap.connect(self.setImage)
