@@ -18,6 +18,11 @@ from QLabeledProgressBar import *
 
 DEFAULT_FS = 30
 
+def runEmpty(cap):
+    for __ in range(5):
+        ret, frame = cap.read()
+
+
 class VideoThread(QThread):
     changePixmap = pyqtSignal(QImage)
     changeSnr = pyqtSignal(float)
@@ -33,6 +38,13 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
+        rgbImage = np.zeros((480,640,3), dtype=np.uint8)
+        h, w, ch = rgbImage.shape
+        bytesPerLine = ch * w
+        convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
+        p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+        self.changePixmap.emit(p)
+        
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         # cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
         n = 0
@@ -97,7 +109,7 @@ class VideoThread(QThread):
             else:
                 print('Video off')
                 break
-                
+        # print('capture object has closed')        
         cap.release()
                
     def quit(self):
@@ -188,8 +200,9 @@ class AppWindow(QWidget):
         return ppgLine, maxLine, rriLine, lombLine
     
     def closeEvent(self, event):
-        # self.VideoSource.quit()
-        # self.VideoSource.wait()
+        # print(event)
+        self.VideoSource.quit()
+        self.VideoSource.wait()
         event.accept()
     
 
@@ -249,7 +262,7 @@ class AppWindow(QWidget):
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar
-        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='distance', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
+        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='dist.', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
         # Label for hr and rr data
