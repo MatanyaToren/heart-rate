@@ -122,8 +122,8 @@ class AppWindow(QWidget):
     
         # location and size of window that opens
         self.title = 'heart-rate'
-        self.left = 0
-        self.top = 40
+        self.left = 40
+        self.top = 80
         self.width = 1500
         self.height = 800
         self.Fs = 30
@@ -286,12 +286,12 @@ class AppWindow(QWidget):
         # Label for hr and rr data
         self.HrLabel = QLabel()
         self.buttons_grid.addWidget(self.HrLabel, 0, 2, 1, 2) # row, col, hight, width
-        self.HrLabel.setAlignment(Qt.AlignCenter)
+        self.HrLabel.setAlignment(Qt.AlignLeft)
         self.HrLabel.setStyleSheet("""QLabel { 
                                    color : green;
                                    font-size : 12pt; 
                                    }""")
-        self.HrLabel.setText('Heart-Rate: 65 [bpm]\n\nBreathing-Rate: 12 [bpm]')
+        self.HrLabel.setText('\n\nHeart-Rate: 65 [bpm]\n\nBreathing-Rate: 12 [bpm]')
         
         # # add figure for welch periodogram
         # self.WelchFig = Figure(figsize=(7,2)) # width, hight
