@@ -28,6 +28,7 @@ class VideoThread(QThread):
     changeSnr = pyqtSignal(float)
     changeLight = pyqtSignal(float)
     changeDistance = pyqtSignal(float)
+    changeHrResp = pyqtSignal(dict)
     
     
     runs = True
@@ -65,24 +66,16 @@ class VideoThread(QThread):
                         
                     frameRect =  cv2.flip(frame, 1)
                     
-                    if self.App.HeartRateValid[-1]:
-                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate[-1]), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,255,0),2)
-                    else:
-                        cv2.putText(frameRect, "Heart Rate: {:.1f} bpm".format(self.App.HeartRate[-1]), (40,40), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
                     
-                    cv2.putText(frameRect, "Breathing Rate: {:.1f} bpm".format(self.App.RespRate[-1]), (40,80), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)     
-                    
-                    # if len(self.App.brightness[0]) != 0:
-                    #     # display brigness and ratio
-                    #     cv2.putText(frameRect, "brightness: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.brightness]), (40,120), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)
-                    #     cv2.putText(frameRect, "distance ratio: {}".format([int(num[((len(num)-1)//30)*30]) for num in self.App.distance_ratio]), (40,160), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2)  
-                    
-                    # cv2.putText(frameRect, "snr: {:.1f}".format(self.App.snr[-1]), (40,200), cv2.FONT_HERSHEY_SIMPLEX, 0.75,(0,0,255),2) 
 
                     if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
                         self.changeSnr.emit(self.App.snr[-1])
                         self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
                         self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
+                        self.changeHrResp.emit({'hr': self.App.HeartRate[-1], 
+                                                'hrValid': self.App.HeartRateValid, 
+                                                'resp': self.App.RespRate[-1],
+                                                'respValid': self.App.RespRateValid})
                     
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
@@ -217,6 +210,16 @@ class AppWindow(QWidget):
         
         return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
     
+    def updateVitalsDisply(self, result: dict = {'hr': 65, 'hrValid': False, 'resp': 12, 'respValid': False}):
+        result['hrColor'] = 'green' if result['hrValid'] is True else 'red'
+        result['respColor'] = 'green' if result['respValid'] is True else 'red'
+        
+        self.HrLabel.setText(('<br><br><font color="black">&nbsp; Heart Rate:</font>'
+                              + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
+                              + '<br><br><font color="black">&nbsp; Respiratory Rate:</font>'
+                              + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
+    
+    
     def closeEvent(self, event):
         # print(event)
         self.VideoSource.quit()
@@ -292,8 +295,7 @@ class AppWindow(QWidget):
                                    color : black;
                                    font-size : 12pt; 
                                    }""")
-        self.HrLabel.setText('<br><br><font color="black">&nbsp; Heart Rate:</font><font color="red"> 65 [bpm]</font>'
-                             + '<br><br><font color="black">&nbsp; Respiratory Rate:</font><font color="green"> 14 [bpm]</font>')
+        self.updateVitalsDisply()
         
         self.MessageBoxLabel = QLabel()
         self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 1, 1) # row, col, hight, width
@@ -367,6 +369,7 @@ class AppWindow(QWidget):
         self.VideoSource.changeSnr.connect(self.snrLevelBar.setValue)
         self.VideoSource.changeLight.connect(self.brightnessLevel.setValue)
         self.VideoSource.changeDistance.connect(self.distanceLevel.setValue)
+        self.VideoSource.changeHrResp.connect(self.updateVitalsDisply)
         self.VideoSource.finished.connect(self.close)
         self.VideoSource.start()
     
