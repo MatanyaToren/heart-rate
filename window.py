@@ -234,7 +234,7 @@ class AppWindow(QWidget):
         
         # create a label for live video
         self.label = QLabel(self)
-        self.grid_layout.addWidget(self.label, 0, 0, 1, 2) # row, col, hight, width
+        self.grid_layout.addWidget(self.label, 0, 0, 2, 2) # row, col, hight, width
         self.label.setAlignment(Qt.AlignCenter)
         self.label.resize(640, 480)
         
@@ -243,33 +243,33 @@ class AppWindow(QWidget):
         self.buttons_widget = QWidget()
         self.buttons_grid = QGridLayout()
         self.buttons_widget.setLayout(self.buttons_grid)
-        self.grid_layout.addWidget(self.buttons_widget, 1, 0, 3, 2)
+        self.grid_layout.addWidget(self.buttons_widget, 2, 0, 3, 2)
         
         # organize ProgressBars in grid
         self.progressbars_widget = QWidget()
         self.progressbars_grid = QGridLayout()
         self.progressbars_widget.setLayout(self.progressbars_grid)
-        self.buttons_grid.addWidget(self.progressbars_widget, 0, 0, 1, 2)
+        self.buttons_grid.addWidget(self.progressbars_widget, 0, 0, 1, 4)
         
         # add spinbox for welch history
         self.welchSpinBox = QLabeledSpinBox(label='welch no.\nof windows')
         self.welchSpinBox.setGeometry(0, 0, 40, 20)
-        self.buttons_grid.addWidget(self.welchSpinBox, 1, 1, 1, 1)
+        self.buttons_grid.addWidget(self.welchSpinBox, 1, 1, 1, 1, alignment=Qt.AlignBottom)
         
         # add spinbox for resp history
         self.respSpinBox = QLabeledSpinBox(label='welch\nwindow length')
         self.respSpinBox.setGeometry(0, 0, 40, 20)
-        self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1)
+        self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1, alignment=Qt.AlignBottom)
         
         # add spinbox for welch window size
         self.welchWinSizeSpinBox = QLabeledSpinBox(label='lomb no.\nof windows')
         self.welchWinSizeSpinBox.setGeometry(0, 0, 40, 20)
-        self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1)
+        self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1, alignment=Qt.AlignBottom)
         
         # add reset button
         self.resetButton = QPushButton('reset')
-        self.resetButton.setFixedSize(90,90)
-        self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1)
+        self.resetButton.setFixedSize(95,95)
+        self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1, alignment=Qt.AlignBottom)
         
         # progress bar
         self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr', range=(-5,5), colormap={'green': (0,10), 'red': (-10,0)})
@@ -285,13 +285,25 @@ class AppWindow(QWidget):
         
         # Label for hr and rr data
         self.HrLabel = QLabel()
-        self.buttons_grid.addWidget(self.HrLabel, 0, 2, 1, 2) # row, col, hight, width
+        self.grid_layout.addWidget(self.HrLabel, 0, 2, 1, 1) # row, col, hight, width
         self.HrLabel.setAlignment(Qt.AlignLeft)
         self.HrLabel.setStyleSheet("""QLabel { 
-                                   color : green;
+                                   background-color : white;
+                                   color : black;
                                    font-size : 12pt; 
                                    }""")
-        self.HrLabel.setText('\n\nHeart-Rate: 65 [bpm]\n\nBreathing-Rate: 12 [bpm]')
+        self.HrLabel.setText('<br><br><font color="black">&nbsp; Heart Rate:</font><font color="red"> 65 [bpm]</font>'
+                             + '<br><br><font color="black">&nbsp; Respiratory Rate:</font><font color="green"> 14 [bpm]</font>')
+        
+        self.MessageBoxLabel = QLabel()
+        self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 1, 1) # row, col, hight, width
+        self.MessageBoxLabel.setAlignment(Qt.AlignLeft)
+        self.MessageBoxLabel.setStyleSheet("""QLabel { 
+                                   background-color : white;
+                                   color : black;
+                                   font-size : 12pt; 
+                                   }""")
+        self.MessageBoxLabel.setText('\n Message Box:\n\n This is a message\n please modify your behavior')
         
         # # add figure for welch periodogram
         # self.WelchFig = Figure(figsize=(7,2)) # width, hight
@@ -299,9 +311,9 @@ class AppWindow(QWidget):
         # self.grid_layout.addWidget(self.WelchCanvas, 2, 0, 1, 2)
         
         # add figure for respiratory rate
-        self.RespFig = Figure(figsize=(7, 9)) #(4,9)
+        self.RespFig = Figure() # figsize=(1, 1.6)) #(4,9)
         self.RespCanvas = FigureCanvas(self.RespFig)
-        self.grid_layout.addWidget(self.RespCanvas, 0, 2, 4, 2)
+        self.grid_layout.addWidget(self.RespCanvas, 1, 2, 4, 2)
         
         gs = self.RespFig.add_gridspec(3,2)
         self.hrAx = self.RespFig.add_subplot(gs[0, :])
@@ -313,7 +325,7 @@ class AppWindow(QWidget):
 
         self.WelchAx.plot([], [])
         self.WelchAx.set_xlabel('bpm')
-        self.WelchAx.set_title('welch periodogram')
+        self.WelchAx.set_title('heart rate: welch')
         self.WelchAx.set_xlim([0, 180])
         self.WelchAx.set_ylim([0, 1.1])
         
@@ -329,12 +341,12 @@ class AppWindow(QWidget):
         self.hrAx.set_xlim([0, 2*self.n_seconds])
         self.hrAx.set_ylim([45, 100])
         self.hrAx.set_xlabel('time')
-        self.hrAx.set_ylabel('hr [bpm]', color='green')
-        self.hrAx.set_title('heart-rate signal')
+        self.hrAx.set_ylabel('hr [bpm]', color='red')
+        self.hrAx.set_title('heart-rate and respiratory-rate')
         
         self.respAx.step([], [], color='blue')
         self.respAx.set_ylim([5, 25])
-        self.respAx.set_ylabel('resp. rate [bpm]', color='blue')
+        self.respAx.set_ylabel('resp. rate [bpm]', color='purple')
         
         self.lombAx.plot([], [])
         self.lombAx.set_xlim([0, 40])
