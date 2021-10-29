@@ -73,9 +73,9 @@ class VideoThread(QThread):
                         self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
                         self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
                         self.changeHrResp.emit({'hr': self.App.HeartRate[-1], 
-                                                'hrValid': self.App.HeartRateValid, 
+                                                'hrValid': self.App.HeartRateValid[-1], 
                                                 'resp': self.App.RespRate[-1],
-                                                'respValid': self.App.RespRateValid})
+                                                'respValid': self.App.RespRateValid[-1]})
                     
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
@@ -166,6 +166,12 @@ class AppWindow(QWidget):
             
         except Empty:
             pass
+        
+        except BaseException as e:
+            print(e.message)
+            
+        except:
+            print('unknown exception at RespUpdate')
          
         
         try:
