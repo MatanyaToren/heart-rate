@@ -91,7 +91,9 @@ class App():
 
         if max(self.nperseg, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.nstep:
             f, pxx = self.welch_obj.update(self.filtered_signal[-self.nperseg:])
-            HeartRate, HeartRateValid = self.heart_rate_otlier_removal.update(f[np.argmax(pxx)] * 60)
+            hr_valid_range = np.logical_and(f >= self.min_bpm/60, f <= self.max_bpm/60)
+            tmp_hr = f[hr_valid_range][np.argmax(pxx[hr_valid_range])] * 60
+            HeartRate, HeartRateValid = self.heart_rate_otlier_removal.update(tmp_hr)
             self.get_snr(pxx, f, self.HeartRate[-1]/60)
             self.HeartRate.append(HeartRate)
             self.HeartRateValid.append(HeartRateValid)
