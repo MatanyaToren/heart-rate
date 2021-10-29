@@ -325,11 +325,19 @@ class AppWindow(QWidget):
         self.lombAx = self.RespFig.add_subplot(gs[2, 1])
         
 
-        self.WelchAx.plot([], [])
-        self.WelchAx.set_xlabel('bpm')
-        self.WelchAx.set_title('heart rate: welch')
+        COLOR_LOMB = 'magenta'
+        COLOR_WELCH = 'blue'
+        self.WelchAx.plot([], [], color=COLOR_WELCH)
+        self.WelchAx.set_xlabel('beats per minute')
+        self.WelchAx.set_title('heart rate: welch', color=COLOR_WELCH)
         self.WelchAx.set_xlim([0, 180])
         self.WelchAx.set_ylim([0, 1.1])
+        
+        self.lombAx.plot([], [], color=COLOR_LOMB)
+        self.lombAx.set_xlim([0, 40])
+        self.lombAx.set_ylim([0, 1.1])
+        self.lombAx.set_xlabel('breaths per minute')
+        self.lombAx.set_title('resp. rate: lomb', color=COLOR_LOMB)
         
         
         # self.ppgAx, self.rriAx, self.lombAx = self.RespFig.subplots(nrows=3, ncols=2)
@@ -339,22 +347,17 @@ class AppWindow(QWidget):
         self.ppgAx.set_xlabel('time')
         self.ppgAx.set_title('ppg signal')
 
-        self.hrAx.step([], [], color='green')
+        self.hrAx.step([], [], color=COLOR_WELCH)
         self.hrAx.set_xlim([0, 2*self.n_seconds])
         self.hrAx.set_ylim([45, 100])
         self.hrAx.set_xlabel('time')
-        self.hrAx.set_ylabel('hr [bpm]', color='red')
+        self.hrAx.set_ylabel('hr [bpm]', color=COLOR_WELCH)
         self.hrAx.set_title('heart-rate and respiratory-rate')
         
-        self.respAx.step([], [], color='blue')
+        self.respAx.step([], [], color=COLOR_LOMB)
         self.respAx.set_ylim([5, 25])
-        self.respAx.set_ylabel('resp. rate [bpm]', color='purple')
+        self.respAx.set_ylabel('resp. rate [bpm]', color=COLOR_LOMB)
         
-        self.lombAx.plot([], [])
-        self.lombAx.set_xlim([0, 40])
-        self.lombAx.set_ylim([0, 1.1])
-        self.lombAx.set_xlabel('breaths per minute')
-        self.lombAx.set_title('lomb periogogram')
         
         # self.WelchFig.tight_layout()
         self.RespFig.tight_layout()

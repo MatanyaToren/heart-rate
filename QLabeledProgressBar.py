@@ -36,7 +36,7 @@ class QLabeledProgressBar(QWidget):
         
         
     def setValue(self, value):
-        self.ProgressBar.setValue(100*value)
+        self.ProgressBar.setValue(int(100*value))
         self.ProgressBar.setFormat(self.format.format(value))
         
         for key, (min, max) in self.colormap.items():
