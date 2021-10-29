@@ -159,7 +159,8 @@ class AppWindow(QWidget):
             WelchData = self.App.WelchQueue.get_nowait()
             WelchLine.set_data(WelchData['f']*60, WelchData['pxx'])
             
-            hrLine.set_data(WelchData['HeartRate']-WelchData['HeartRate'][-1]+2*self.n_seconds,
+            offset_hr = WelchData['HeartRateTime'][-1] - 2*self.n_seconds if WelchData['HeartRateTime'][-1] > 2*self.n_seconds else 0
+            hrLine.set_data(WelchData['HeartRateTime'] - offset_hr,
                             WelchData['HeartRate'])
             self.WelchAx.set_ylim([0, max(WelchData['pxx'].max(), 1.1)])
             
@@ -182,7 +183,8 @@ class AppWindow(QWidget):
                 newData = self.App.RespQueue.get_nowait()
                 self.newData = newData
                 
-                respLine.set_data(newData['RespRateTime']-newData['RespRateTime'][-1]+2*self.n_seconds,
+                offset_rr = newData['RespRateTime'][-1] - 2*self.n_seconds if newData['RespRateTime'][-1] > 2*self.n_seconds else 0
+                respLine.set_data(newData['RespRateTime'] - offset_rr,
                             newData['RespRate'])
             
             except Empty:
