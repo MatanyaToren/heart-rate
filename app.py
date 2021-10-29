@@ -247,4 +247,39 @@ class App():
     def quit(self):
         pass
     
-    
+    def reset(self):
+        """"
+        This function erases the history of the system, 
+        but does not changes settings defined by user
+        """
+        
+        # reset queues to display results
+        while not self.SignalQueue.empty():
+            self.SignalQueue.get_nowait()
+            
+        while not self.WelchQueue.empty():
+            self.SignalQueue.get_nowait()
+            
+        while not self.SignalQueue.empty():
+            self.RespQueue.get_nowait()
+        
+        
+        self.HeartRate = [0]
+        self.HeartRateValid = [False]
+        self.HeartRateTime = [0]
+        self.RespRate = [0]
+        self.RespRateValid = [False]
+        self.RespRateTime = [0]
+        self.n = 0
+        self.raw_signal = []
+        self.filtered_signal = []
+        self.brightness = ([0], [0], [0])
+        self.distance_ratio = ([0], [0], [0])
+        self.snr = [0]
+        
+        # reset objects
+        # self.roi_finder = roi(types=['all'])
+        self.resp = respiratory(n_beats=40, distance=int(self.Fs/2), nwindows=self.resp.nwindows)
+        self.welch_obj = welch_update(fs=self.Fs, nperseg=self.nperseg, nwindows=self.welch_obj.nwindow, nfft=self.Fs*60)
+        self.heart_rate_otlier_removal = VarianceFilter()
+        self.resp_rate_otlier_removal = VarianceFilter()

@@ -228,6 +228,23 @@ class AppWindow(QWidget):
                               + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
     
     
+    def reset_plot(self):
+        del self.newData
+        self.newData = None
+        
+        axes_to_reset = (self.hrAx, 
+                         self.respAx, 
+                         self.ppgAx, 
+                         self.WelchAx, 
+                         self.lombAx)
+        
+        for ax in axes_to_reset:
+            lines = ax.get_lines()
+            
+            for line in lines:
+                line.set_data([], [])
+    
+    
     def closeEvent(self, event):
         # print(event)
         self.VideoSource.quit()
@@ -373,6 +390,8 @@ class AppWindow(QWidget):
         self.App = App(Fs=self.Fs)
         self.welchSpinBox.connect(self.App.set_welch_nwindows)
         self.respSpinBox.connect(self.App.set_lomb_nwindows)
+        self.resetButton.clicked.connect(self.App.reset)
+        self.resetButton.clicked.connect(self.reset_plot)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
         self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
