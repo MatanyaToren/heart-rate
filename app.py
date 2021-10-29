@@ -15,6 +15,8 @@ class SampleError(RuntimeError):
 
 
 class App():
+    roi_finder = roi(types=['all'])
+    
     def __init__(self, Fs=30, min_bpm=45, max_bpm=200):
         
         # queues to display results
@@ -51,7 +53,7 @@ class App():
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
         
         self.tracker = FaceTracker()
-        self.roi_finder = roi(types=['all'])
+        # self.roi_finder = roi(types=['all'])
         self.resp = respiratory(n_beats=40, distance=int(Fs/2), nwindows=6)
         self.welch_obj = welch_update(fs=Fs, nperseg=self.nperseg, nwindows=20, nfft=Fs*60)
         self.heart_rate_otlier_removal = VarianceFilter()
