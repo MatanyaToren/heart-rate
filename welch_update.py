@@ -8,8 +8,7 @@ class welch_update:
           detrend='constant', return_onesided=True, scaling='density',
           axis=-1, average='mean'):
 
-        if 0 != nwindows % 1 and 0 < nwindows:
-            raise ValueError('nwindows (number of windows to average) should be a natuarl number')
+        self.set_nwindows(nwindows)
         
         self.nwindow = nwindows
         self.fs=fs
@@ -34,9 +33,14 @@ class welch_update:
                                 axis=self.axis, average=self.average)
         self.windows.append(welch_segment)
 
-        if self.nwindow < len(self.windows):
+        while self.nwindow < len(self.windows):
             del self.windows[0]
 
+        # print('welch no. windows: ', len(self.windows))
         return f, np.mean(self.windows, axis=0)
 
-          
+    def set_nwindows(self, nwindows):
+        if 0 != nwindows % 1 and 0 >= nwindows:
+            raise ValueError('nwindows (number of windows to average) should be a natuarl number')
+        
+        self.nwindow = nwindows          

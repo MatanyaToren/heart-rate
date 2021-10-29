@@ -16,7 +16,7 @@ class respiratory():
         self.pgrams = []
         self.time = 0
         self.distance = distance
-        self.nwindows = nwindows
+        self.set_nwindows(nwindows)
 
         # self.freqs = freqs
         self.n_beats = n_beats
@@ -123,6 +123,13 @@ class respiratory():
     
     def set_time(self, time):
         self.time = time
+        
+        
+    def set_nwindows(self, nwindows):
+        if 0 != nwindows % 1 and 0 >= nwindows:
+            raise ValueError('nwindows (number of windows to average) should be a natuarl number')
+        
+        self.nwindows = nwindows
 
 
 if __name__ == '__main__':
