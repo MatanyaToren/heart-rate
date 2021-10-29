@@ -9,12 +9,15 @@ from matplotlib.figure import Figure
 from matplotlib.animation import FuncAnimation
 from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2QT as NavigationToolbar)
 from matplotlib.backends.backend_qt5 import FigureCanvasQT
-from threading import Thread
+from threading import Thread, RLock
 from queue import Queue, Empty
 from time import time
 from app import *
 from QLabeledSpinBox import *
 from QLabeledProgressBar import *
+
+import cgitb
+cgitb.enable(format = 'text')
 
 DEFAULT_FS = 30
 
@@ -33,18 +36,14 @@ class VideoThread(QThread):
     
     runs = True
     
-    def __init__(self, App, Fs):
+    def __init__(self, App, Fs, lock):
         super().__init__()
         self.App = App
         self.Fs = Fs
+        self.AppLock = lock
 
     def run(self):
-        rgbImage = np.zeros((480,640,3), dtype=np.uint8)
-        h, w, ch = rgbImage.shape
-        bytesPerLine = ch * w
-        convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-        p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
-        self.changePixmap.emit(p)
+        self.frame_to_display(np.zeros((480,640,3), dtype=np.uint8), cvt=False)
         
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         # cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
@@ -57,6 +56,7 @@ class VideoThread(QThread):
             
             if ret:
                 # https://stackoverflow.com/a/55468544/6622587
+                # if self.AppLock.acquire(blocking=False) is True:
                 try:
                     self.App.new_sample(frame)
                     x, y, width, height = self.App.bbox
@@ -64,9 +64,6 @@ class VideoThread(QThread):
                         cv2.rectangle(frame, (int(x), int(y)), (int(x+width), int(y+height)), (0, 255, 0), 2, 1)
                         cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2)
                         
-                    frameRect =  cv2.flip(frame, 1)
-                    
-                    
 
                     if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
                         self.changeSnr.emit(self.App.snr[-1])
@@ -77,25 +74,30 @@ class VideoThread(QThread):
                                                 'resp': self.App.RespRate[-1],
                                                 'respValid': self.App.RespRateValid})
                     
+                    
+                    
                 except SampleError as err:
-                    frameRect =  cv2.flip(frame, 1)
+                    # frameRect =  cv2.flip(frame, 1)
+                    pass
                     
                 except Exception as err:
                     print(err)
-                    frameRect =  cv2.flip(frame, 1)
+                    # frameRect =  cv2.flip(frame, 1)
                     
                 except:
                     print('unknown error while using new frame')
+                    
+                finally:
+                    frameRect =  cv2.flip(frame, 1)
+                    # self.AppLock.release()
+                    pass
+                
+                # else:
+                #     frameRect = cv2.flip(frame, 1)
                 
         
                 try:    
-                    rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
-                    h, w, ch = rgbImage.shape
-                    bytesPerLine = ch * w
-                    convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-                    p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
-                    self.changePixmap.emit(p)
-                
+                    self.frame_to_display(frameRect)
                 except:
                     print('an error ocurred while sending frame to display')
                 
@@ -104,7 +106,15 @@ class VideoThread(QThread):
                 break
         # print('capture object has closed')        
         cap.release()
-               
+        
+    def frame_to_display(self, frame, cvt=True):
+        rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) if cvt is True else frame
+        h, w, ch = rgbImage.shape
+        bytesPerLine = ch * w
+        convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
+        p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+        self.changePixmap.emit(p)
+                    
     def quit(self):
         self.runs = False
         
@@ -119,7 +129,7 @@ class AppWindow(QWidget):
         self.top = 80
         self.width = 1500
         self.height = 800
-        self.Fs = 30
+        self.Fs = 15
         self.n_seconds = 20
         self.t = np.linspace(start=0, stop=self.n_seconds, num=self.n_seconds*self.Fs, endpoint=False)
         self.t_rri = np.linspace(start=0, stop=2*self.n_seconds, num=2*self.n_seconds*self.Fs, endpoint=False)
@@ -156,6 +166,8 @@ class AppWindow(QWidget):
         WelchLine, = self.WelchAx.get_lines()
         
         try:
+            # self.AppLock.acquire()
+            
             WelchData = self.App.WelchQueue.get_nowait()
             WelchLine.set_data(WelchData['f']*60, WelchData['pxx'])
             
@@ -165,20 +177,26 @@ class AppWindow(QWidget):
             
         except Empty:
             pass
-         
+        
+        finally:
+            # self.AppLock.release() 
+            pass
         
         try:
+            # self.AppLock.acquire()
+            
             filtered_signal = self.App.SignalQueue.get_nowait()
       
-            ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seconds*self.App.Fs:])
+            ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seconds*self.Fs:])
             try:
-                self.ppgAx.set_ylim([filtered_signal[-self.n_seconds*self.App.Fs:].min(), filtered_signal[-self.n_seconds*self.App.Fs:].max()])
+                self.ppgAx.set_ylim([filtered_signal[-self.n_seconds*self.Fs:].min(), filtered_signal[-self.n_seconds*self.Fs:].max()])
             except ValueError:
-                print('max:', filtered_signal[-self.n_seconds*self.App.Fs:].max())
-                print('min:', filtered_signal[-self.n_seconds*self.App.Fs:].min())
+                print('max:', filtered_signal[-self.n_seconds*self.Fs:].max())
+                print('min:', filtered_signal[-self.n_seconds*self.Fs:].min())
                 # print(filtered_signal)
                 
             try:
+                # self.AppLock.acquire()
                 newData = self.App.RespQueue.get_nowait()
                 self.newData = newData
                 
@@ -189,10 +207,14 @@ class AppWindow(QWidget):
                 if self.newData is not None:
                     newData = self.newData
                 else:
+                    # self.AppLock.release()
                     return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
-                
             
-            shift_indx = max(0, filtered_signal.shape[0]-self.n_seconds*self.App.Fs)
+            finally:
+                # self.AppLock.release()    
+                pass
+            
+            shift_indx = max(0, filtered_signal.shape[0]-self.n_seconds*self.Fs)
             # shift_indx_rri = max(0, filtered_signal.shape[0]-2*self.n_seconds*self.App.Fs)
             peak_times = newData['peak_times'][newData['peak_times'] >= shift_indx]
             # peak_times_rri = newData['peak_times'][newData['peak_times'] >= shift_indx_rri]
@@ -208,6 +230,10 @@ class AppWindow(QWidget):
         except Empty:
             pass
         
+        finally:
+            # self.AppLock.release()
+            pass
+        
         return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
     
     def updateVitalsDisply(self, result: dict = {'hr': 65, 'hrValid': False, 'resp': 12, 'respValid': False}):
@@ -218,6 +244,15 @@ class AppWindow(QWidget):
                               + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
                               + '<br><br><font color="black">&nbsp; Respiratory Rate:</font>'
                               + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
+    
+    
+    def resetApp(self):
+        app = App(Fs=self.Fs)
+        
+        with self.AppLock:
+            # del self.App
+            self.App = app
+            self.VideoSource.App = app
     
     
     def closeEvent(self, event):
@@ -272,6 +307,7 @@ class AppWindow(QWidget):
         # add reset button
         self.resetButton = QPushButton('reset')
         self.resetButton.setFixedSize(95,95)
+        self.resetButton.clicked.connect(self.resetApp)
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1, alignment=Qt.AlignBottom)
         
         # progress bar
@@ -359,12 +395,13 @@ class AppWindow(QWidget):
         # self.WelchFig.tight_layout()
         self.RespFig.tight_layout()
         
+        self.AppLock = RLock()
         self.App = App(Fs=self.Fs)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
         self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
         
-        self.VideoSource = VideoThread(self.App, Fs=self.Fs)
+        self.VideoSource = VideoThread(self.App, Fs=self.Fs, lock=self.AppLock)
         self.VideoSource.changePixmap.connect(self.setImage)
         self.VideoSource.changeSnr.connect(self.snrLevelBar.setValue)
         self.VideoSource.changeLight.connect(self.brightnessLevel.setValue)
