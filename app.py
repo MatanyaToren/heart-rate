@@ -45,8 +45,8 @@ class App():
         self.n = 0
         self.raw_signal = []
         self.filtered_signal = []
-        self.brightness = ([], [], [])
-        self.distance_ratio = ([], [], [])
+        self.brightness = ([0], [0], [0])
+        self.distance_ratio = ([0], [0], [0])
         self.snr = [0]
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
@@ -64,6 +64,7 @@ class App():
     def new_sample(self, frame):
         try:
             self.bbox = self.tracker.update(frame)
+            self.get_signal(frame)
         
         except (TrackingError, OutOfFrameError, DetectionError) as err:
             # print(err.message)
@@ -77,7 +78,6 @@ class App():
             print('unknown error in tracking')
             # print(err)
            
-        self.get_signal(frame)
         self.get_brightness(frame)
         self.get_distance_indicator(frame)
         self.n += 1
@@ -143,14 +143,19 @@ class App():
             self.offsets = self.roi_finder.get_roi(frame, self.bbox)    
         
         newSample = 0
-        self.rois = []
+        rois = []
         for (offset_x, offset_y, size_x, size_y) in self.offsets:
             x_roi = int(x + offset_x * w)
             w_roi = int(w * size_x)
             y_roi = int(y + offset_y * h)
             h_roi = int(h * size_y)
             
-            self.rois.append((x_roi, y_roi, w_roi, h_roi))
+            if (x_roi < 0 or x_roi+w_roi+1 >= frame.shape[1] 
+                or y_roi < 0 or y_roi+h_roi+1 >= frame.shape[0]):
+                
+                raise OutOfFrameError
+            
+            rois.append((x_roi, y_roi, w_roi, h_roi))
             
             try:
                 # spatial mean of the bounding box of the face
@@ -160,6 +165,7 @@ class App():
             except Exception as err:
                 print(err)
                 
+            self.rois = rois
                         
         self.raw_signal.append(newSample)
 
@@ -169,7 +175,7 @@ class App():
         """
         This function computes the brightness in the rois, for quality assurance purposes
         """
-        gray = cv2.cvtColor(frame, cv2. COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         for (x_roi, y_roi, w_roi, h_roi), brightness in zip(self.rois, self.brightness):
             
             try:
@@ -189,10 +195,19 @@ class App():
         """
         This function computes the area ratio between the rois and the frame, for quality assurance purposes
         """
-        frame_area = frame.shape[0] * frame.shape[1]
-        for (_, _, w_roi, h_roi), ratio in zip(self.rois, self.distance_ratio):
-            roi_area = w_roi * h_roi
-            ratio.append(roi_area / (frame_area + 1e-7) * (100))
+        try:
+            frame_area = frame.shape[0] * frame.shape[1]
+            for (_, _, w_roi, h_roi), ratio in zip(self.rois, self.distance_ratio):
+                roi_area = w_roi * h_roi
+                ratio.append(roi_area / (frame_area + 1e-7) * (100))
+                
+        except RuntimeWarning as e:
+            print(e)
+            raise e
+            
+        except:
+            print('error in distance computation')
+            raise Exception
 
         return self.distance_ratio
     
@@ -203,12 +218,21 @@ class App():
         The snr in this context is defines as the 10*log_10 of the ratio of the Energy of pxx in 
         the 0.2 Hz around the highest peak and the total energy of the signal
         """
+        try:
+            TotalEnergy = pxx.sum()
+            SignalRange = np.logical_and(f > (peak - 0.2), f < (peak + 0.2))
+            SignalEnergy = pxx[SignalRange].sum()
+            snr = 10*np.log10(SignalEnergy / (TotalEnergy - SignalEnergy + 1e-7))
+            self.snr.append(snr)
         
-        TotalEnergy = pxx.sum()
-        SignalRange = np.logical_and(f > (peak - 0.2), f < (peak + 0.2))
-        SignalEnergy = pxx[SignalRange].sum()
-        snr = 10*np.log10(SignalEnergy / (TotalEnergy - SignalEnergy + 1e-7))
-        self.snr.append(snr)
+        except RuntimeWarning as e:
+            print(e)
+            raise e
+            
+        except:
+            print('error in snr computation')
+            raise Exception
+            
         return snr
             
     
@@ -216,6 +240,10 @@ class App():
         self.welch_obj.set_nwindows(nwindows)
         # print('nwindows: ', nwindows)
     
+    def set_lomb_nwindows(self, nwindows):
+        self.resp.set_nwindows(nwindows)
+        # print('nwindows: ', nwindows)
+        
     def quit(self):
         pass
     

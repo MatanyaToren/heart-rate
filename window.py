@@ -162,13 +162,13 @@ class AppWindow(QWidget):
             offset_hr = WelchData['HeartRateTime'][-1] - 2*self.n_seconds if WelchData['HeartRateTime'][-1] > 2*self.n_seconds else 0
             hrLine.set_data(WelchData['HeartRateTime'] - offset_hr,
                             WelchData['HeartRate'])
-            self.WelchAx.set_ylim([0, max(WelchData['pxx'].max(), 1.1)])
+            self.WelchAx.set_ylim([0, max(np.nanmax(WelchData['pxx']), 1.1)])
             
         except Empty:
             pass
         
         except BaseException as e:
-            print(e.message)
+            print(e)
             
         except:
             print('unknown exception at RespUpdate')
@@ -268,12 +268,12 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.welchSpinBox, 1, 1, 1, 1, alignment=Qt.AlignBottom)
         
         # add spinbox for resp history
-        self.respSpinBox = QLabeledSpinBox(label='welch\nwindow length')
+        self.respSpinBox = QLabeledSpinBox(label='lomb no.\nof windows', initValue=6)
         self.respSpinBox.setGeometry(0, 0, 40, 20)
         self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1, alignment=Qt.AlignBottom)
         
         # add spinbox for welch window size
-        self.welchWinSizeSpinBox = QLabeledSpinBox(label='lomb no.\nof windows')
+        self.welchWinSizeSpinBox = QLabeledSpinBox(label='welch\nwindow length')
         self.welchWinSizeSpinBox.setGeometry(0, 0, 40, 20)
         self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1, alignment=Qt.AlignBottom)
         
@@ -372,6 +372,7 @@ class AppWindow(QWidget):
         
         self.App = App(Fs=self.Fs)
         self.welchSpinBox.connect(self.App.set_welch_nwindows)
+        self.respSpinBox.connect(self.App.set_lomb_nwindows)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
         self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
