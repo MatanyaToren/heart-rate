@@ -212,6 +212,10 @@ class App():
         return snr
             
     
+    def set_welch_nwindows(self, nwindows):
+        self.welch_obj.set_nwindows(nwindows)
+        # print('nwindows: ', nwindows)
+    
     def quit(self):
         pass
     

@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt
 
 
 class QLabeledSpinBox(QWidget):
-    def __init__(self, label='label for slider', range=(3,10), initValue:int =5):
+    def __init__(self, label='label for slider', range=(1,30), initValue:int = 20):
         super().__init__()
         
         self.SpinBox = QSpinBox()
@@ -14,6 +14,7 @@ class QLabeledSpinBox(QWidget):
         font = self.SpinBox.font()
         font.setPointSize(12)
         self.SpinBox.setFont(font)
+        self.SpinBox.setRange(*range)
         self.SpinBox.setValue(initValue)
         self.Label = QLabel()
         self.Label.setStyleSheet("""QLabel { 
@@ -29,7 +30,7 @@ class QLabeledSpinBox(QWidget):
         self.setLayout(self.Box)
         
     def connect(self, changeValueFunc):
-        self.SpinBox.connect(changeValueFunc)
+        self.SpinBox.valueChanged.connect(changeValueFunc)
         
         
 if __name__ == '__main__':

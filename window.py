@@ -371,6 +371,7 @@ class AppWindow(QWidget):
         self.RespFig.tight_layout()
         
         self.App = App(Fs=self.Fs)
+        self.welchSpinBox.connect(self.App.set_welch_nwindows)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
         self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
