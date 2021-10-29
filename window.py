@@ -39,11 +39,7 @@ class VideoThread(QThread):
         self.Fs = Fs
 
     def run(self):
-        rgbImage = np.zeros((480,640,3), dtype=np.uint8)
-        h, w, ch = rgbImage.shape
-        bytesPerLine = ch * w
-        convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-        p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+        p = VideoThread.to_display(np.zeros((480,640,3), dtype=np.uint8).copy())
         self.changePixmap.emit(p)
         
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
@@ -63,9 +59,7 @@ class VideoThread(QThread):
                     for (x_bb, y_bb, w_bb, h_bb) in self.App.rois:
                         cv2.rectangle(frame, (int(x), int(y)), (int(x+width), int(y+height)), (0, 255, 0), 2, 1)
                         cv2.rectangle(frame, (x_bb, y_bb), (x_bb+w_bb, y_bb+h_bb), (0, 255, 0), 2)
-                        
-                    frameRect =  cv2.flip(frame, 1)
-                    
+                                            
                     
 
                     if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
@@ -78,22 +72,22 @@ class VideoThread(QThread):
                                                 'respValid': self.App.RespRateValid})
                     
                 except SampleError as err:
-                    frameRect =  cv2.flip(frame, 1)
+                    pass
                     
                 except Exception as err:
                     print(err)
-                    frameRect =  cv2.flip(frame, 1)
+                    pass
                     
                 except:
                     print('unknown error while using new frame')
+                    
+                # finally:
+                    # frameRect =  cv2.flip(frame, 1)
                 
         
                 try:    
-                    rgbImage = cv2.cvtColor(frameRect, cv2.COLOR_BGR2RGB)
-                    h, w, ch = rgbImage.shape
-                    bytesPerLine = ch * w
-                    convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
-                    p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+                    frameRect = cv2.flip(frame, 1)
+                    p = VideoThread.to_display(frameRect)
                     self.changePixmap.emit(p)
                 
                 except:
@@ -108,6 +102,13 @@ class VideoThread(QThread):
     def quit(self):
         self.runs = False
         
+    def to_display(frame):
+        rgbImage = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgbImage.shape
+        bytesPerLine = ch * w
+        convertToQtFormat = QImage(rgbImage.data, w, h, bytesPerLine, QImage.Format_RGB888)
+        p = convertToQtFormat.scaled(640, 480, Qt.KeepAspectRatio)
+        return p
     
 class AppWindow(QWidget):
     def __init__(self):
