@@ -127,6 +127,14 @@ class AppWindow(QWidget):
         self.t_rri = np.linspace(start=0, stop=2*self.n_seconds, num=2*self.n_seconds*self.Fs, endpoint=False)
         self.newData = None
         
+        # progress bar messages
+        self.messagesToUser = {'brightness': '- Please move so that your<br> face will be under direct light',
+                               'distance': '- Please get closer<br> to the camera',
+                               'movement': '- Please try to stay still'}
+        self.messagesToUser_On = {'brightness': False, 
+                                  'distance': False,
+                                  'movement': False}
+        
         self.initUI()
 
     # @pyqtSlot(QImage)
@@ -220,7 +228,7 @@ class AppWindow(QWidget):
         
         return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
     
-    def updateVitalsDisply(self, result: dict = {'hr': 65, 'hrValid': False, 'resp': 12, 'respValid': False}):
+    def updateVitalsDisplay(self, result: dict = {'hr': 65, 'hrValid': False, 'resp': 12, 'respValid': False}):
         result['hrColor'] = 'green' if result['hrValid'] is True else 'red'
         result['respColor'] = 'green' if result['respValid'] is True else 'red'
         
@@ -228,6 +236,31 @@ class AppWindow(QWidget):
                               + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
                               + '<br><br><font color="black">&nbsp; Respiratory Rate:</font>'
                               + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
+    
+    
+    def updateMessageBox(self, name, flag : bool):
+        try: 
+            if self.messagesToUser_On[name] == flag:
+                return
+            
+            self.messagesToUser_On[name] = flag
+            
+            to_print = '<b>Message Box:</b>'
+            for name, message in self.messagesToUser.items(): 
+                if self.messagesToUser_On[name] is True:
+                    to_print += '<br>'
+                    to_print += message
+                    
+            self.MessageBoxLabel.setText(to_print)
+            
+        except AttributeError as e:
+            print(e)
+        
+        except BaseException as e:
+            print(e)
+        
+        except:
+            print('unknown error when printing messages')    
     
     
     def reset_plot(self):
@@ -269,6 +302,17 @@ class AppWindow(QWidget):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.resize(640, 480)
         
+        # create message box
+        self.MessageBoxLabel = QLabel()
+        self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 1, 1) # row, col, hight, width
+        self.MessageBoxLabel.setAlignment(Qt.AlignLeft)
+        self.MessageBoxLabel.setStyleSheet("""QLabel { 
+                                   background-color : white;
+                                   color : black;
+                                   font-size : 12pt; 
+                                   }""")
+        self.updateMessageBox('distance', False)
+        
         
         # organize buttons in grid
         self.buttons_widget = QWidget()
@@ -307,15 +351,15 @@ class AppWindow(QWidget):
         self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
         # progress bar
-        self.brightnessLevel = QLabeledProgressBar(objectName='brightness', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (150,256), 'red': (0,150)})
+        self.brightnessLevel = QLabeledProgressBar(objectName='brightness', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (150,256), 'red': (0,150)}, printMessage=self.updateMessageBox)
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar
-        self.distanceLevel = QLabeledProgressBar(objectName='distance', textVisible=True, label='prox.', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
+        self.distanceLevel = QLabeledProgressBar(objectName='distance', textVisible=True, label='prox.', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)}, printMessage=self.updateMessageBox)
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
         # progress bar
-        self.movementLevel = QLabeledProgressBar(objectName='movement', textVisible=True, label='movement', range=(0,3), format='{:0.0f}', colormap={'green': (0, 1), 'red': (1, 6)})
+        self.movementLevel = QLabeledProgressBar(objectName='movement', textVisible=True, label='movement', range=(0,3), format='{:0.0f}', colormap={'green': (0, 1), 'red': (1, 6)}, printMessage=self.updateMessageBox)
         self.progressbars_grid.addWidget(self.movementLevel, 0, 3, 1, 1)
         
         # Label for hr and rr data
@@ -327,17 +371,8 @@ class AppWindow(QWidget):
                                    color : black;
                                    font-size : 12pt; 
                                    }""")
-        self.updateVitalsDisply()
+        self.updateVitalsDisplay()
         
-        self.MessageBoxLabel = QLabel()
-        self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 1, 1) # row, col, hight, width
-        self.MessageBoxLabel.setAlignment(Qt.AlignLeft)
-        self.MessageBoxLabel.setStyleSheet("""QLabel { 
-                                   background-color : white;
-                                   color : black;
-                                   font-size : 12pt; 
-                                   }""")
-        self.MessageBoxLabel.setText('\n Message Box:\n\n This is a message\n please modify your behavior')
         
         # # add figure for welch periodogram
         # self.WelchFig = Figure(figsize=(7,2)) # width, hight
@@ -410,7 +445,7 @@ class AppWindow(QWidget):
         self.VideoSource.changeLight.connect(self.brightnessLevel.setValue)
         self.VideoSource.changeDistance.connect(self.distanceLevel.setValue)
         self.VideoSource.changeMovement.connect(self.movementLevel.setValue)
-        self.VideoSource.changeHrResp.connect(self.updateVitalsDisply)
+        self.VideoSource.changeHrResp.connect(self.updateVitalsDisplay)
         self.VideoSource.finished.connect(self.close)
         self.VideoSource.start()
     

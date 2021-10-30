@@ -7,10 +7,14 @@ from PyQt5.QtGui import QFont
 
 
 class QLabeledProgressBar(QWidget):
-    def __init__(self, label='label for slider', format='{:.1f}', range=(2,30), colormap={'red': (2,20), 'green': (20,30)}, *args, **kwargs):
+    def __init__(self, label='label for slider', format='{:.1f}', range=(2,30), 
+                 colormap={'red': (2,20), 'green': (20,30)}, 
+                 printMessage=None, *args, **kwargs):
         super().__init__()
         
         self.colormap = colormap
+        self.printMessage = printMessage
+        self.name = kwargs['objectName']
         self.format = format
         self.ProgressBar = QProgressBar(*args, **kwargs)
         self.ProgressBar.setOrientation(Qt.Vertical)
@@ -42,6 +46,12 @@ class QLabeledProgressBar(QWidget):
         for key, (min, max) in self.colormap.items():
             if value >= min and value < max:
                 self.setColor(key)
+                
+        if self.isValueRed(value) and self.printMessage is not None:
+            self.printMessage(self.name, flag=True)
+        
+        elif self.printMessage is not None:
+            self.printMessage(self.name, flag=False)
             
     def setColor(self, color):
         self.ProgressBar.setStyleSheet(
@@ -49,7 +59,13 @@ class QLabeledProgressBar(QWidget):
                     background-color: """ + color + """;
                     }""")
         
+    def isValueRed(self, value):
+        try:
+            range = self.colormap['red']
+        except KeyError:
+            return False
         
+        return (value >= range[0] and value < range[1])
         
 if __name__ == '__main__':
     app = QApplication(sys.argv)

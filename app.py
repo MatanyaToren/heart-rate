@@ -155,8 +155,8 @@ class App():
             y_roi = int(y + offset_y * h)
             h_roi = int(h * size_y)
             
-            if (x_roi < 0 or x_roi+w_roi+1 >= frame.shape[1] 
-                or y_roi < 0 or y_roi+h_roi+1 >= frame.shape[0]):
+            if (x_roi < 0 or x_roi+w_roi >= frame.shape[1] 
+                or y_roi < 0 or y_roi+h_roi >= frame.shape[0]):
                 
                 raise OutOfFrameError
             

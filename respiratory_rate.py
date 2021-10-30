@@ -118,6 +118,10 @@ class respiratory():
         f_ang = f * 2 * np.pi
         pxx = signal.lombscargle(t, y, f_ang, precenter=True)
         pxx = pxx * 2 / n
+        
+        if np.isnan(pxx).any():
+            pxx = np.zeros(pxx.shape)
+            
         return f, pxx
     
     
