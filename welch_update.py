@@ -12,6 +12,7 @@ class welch_update:
         
         self.nwindow = nwindows
         self.fs=fs
+        self.window_type = window
         self.window = get_window(window, nperseg)
         self.nperseg = nperseg
         self.nfft = nfft
@@ -26,9 +27,10 @@ class welch_update:
 
     def update(self, x):
         if x.shape[0] != self.nperseg:
-            raise ValueError("every segment must have the same length as 'nperseg'")
+            # raise ValueError("every segment must have the same length as 'nperseg'")
+            self.window = get_window(self.window_type, x.shape[0])
 
-        f, welch_segment = welch(x, fs=self.fs, window=self.window, nperseg=self.nperseg, noverlap=None, nfft=self.nfft,
+        f, welch_segment = welch(x, fs=self.fs, window=self.window, nperseg=x.shape[0], noverlap=None, nfft=self.nfft,
                                 detrend=self.detrend, return_onesided=self.return_onesided, scaling=self.scaling,
                                 axis=self.axis, average=self.average)
         self.windows.append(welch_segment)

@@ -293,7 +293,7 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.respSpinBox, 1, 2, 1, 1, alignment=Qt.AlignBottom)
         
         # add spinbox for welch window size
-        self.welchWinSizeSpinBox = QLabeledSpinBox(label='welch\nwindow length')
+        self.welchWinSizeSpinBox = QLabeledSpinBox(label='welch\nwindow length', initValue=20, range=(1,30))
         self.welchWinSizeSpinBox.setGeometry(0, 0, 40, 20)
         self.buttons_grid.addWidget(self.welchWinSizeSpinBox, 1, 3, 1, 1, alignment=Qt.AlignBottom)
         
@@ -397,6 +397,7 @@ class AppWindow(QWidget):
         self.App = App(Fs=self.Fs)
         self.welchSpinBox.connect(self.App.set_welch_nwindows)
         self.respSpinBox.connect(self.App.set_lomb_nwindows)
+        self.welchWinSizeSpinBox.connect(self.App.set_welch_nperseg)
         self.resetButton.clicked.connect(self.App.reset)
         self.resetButton.clicked.connect(self.reset_plot)
         

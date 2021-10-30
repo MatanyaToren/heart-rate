@@ -31,7 +31,7 @@ class App():
                         (0.3, 0.0, 0.2, 0.2)]
         self.Fs = Fs
         self.nperseg = 20 * Fs
-        self.noverlap = 18 * Fs
+        self.noverlap = 18 * Fs # this parameter is not used
         self.nstep = self.nperseg - self.noverlap
         self.resp_nstep = 10 * Fs  # updating rate of the respiratory rate
         self.filter_step = int(np.gcd(self.nstep, self.resp_nstep) / 6)
@@ -272,6 +272,14 @@ class App():
     def set_lomb_nwindows(self, nwindows):
         self.resp.set_nwindows(nwindows)
         # print('nwindows: ', nwindows)
+        
+    def set_welch_nperseg(self, nperseg : int = 20):
+        if nperseg % 1 != 0 or nperseg < 1:
+            raise ValueError('nperseg should be an integer larger than 1')
+        
+        self.nperseg = nperseg * self.Fs
+        self.noverlap = self.nperseg - self.nstep
+        
         
     def quit(self):
         pass
