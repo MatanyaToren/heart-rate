@@ -5,8 +5,9 @@ class VarianceFilter:
     This class takes samples consecutive samples and leaves out outlying samples
     returns the last inlier sample and if its the newst sample
     """
-    def __init__(self, n_history=100, n_minimal=20, num_sigmas=2):
+    def __init__(self, n_history=30, n_minimal=20, num_sigmas=2):
         self.past_samples = []
+        self.raw_samples = []
         self.n_history = n_history
         self.n_minimal = n_minimal
         self.n = 0
@@ -29,13 +30,14 @@ class VarianceFilter:
         else:    
             self.valid = False
             
+        self.raw_samples.append(sample)
         return self.past_samples[-1], self.valid
         
         
         
     def in_bounderies(self, sample):
-        self.mean = np.mean(self.past_samples[-self.n_history:])
-        self.std = np.std(self.past_samples[-self.n_history:])
+        self.mean = np.mean(self.raw_samples[-self.n_history:])
+        self.std = np.std(self.raw_samples[-self.n_history:])
         
         self.lower = self.mean - self.num_sigmas*self.std
         self.higher = self.mean + self.num_sigmas*self.std
