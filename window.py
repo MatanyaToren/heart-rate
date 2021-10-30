@@ -258,6 +258,7 @@ class AppWindow(QWidget):
         
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
+        self.setFixedSize(self.width, self.height)
         # self.resize(640, 480)
         
         # create a label for live video
@@ -300,15 +301,15 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1, alignment=Qt.AlignBottom)
         
         # progress bar
-        self.snrLevelBar = QLabeledProgressBar(objectName='SNR', textVisible=True, label='snr', range=(-5,5), colormap={'green': (0,10), 'red': (-10,0)})
+        self.snrLevelBar = QLabeledProgressBar(objectName='snr', textVisible=True, label='snr', range=(-5,5), colormap={'green': (0,10), 'red': (-10,0)})
         self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
         # progress bar
-        self.brightnessLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (150,256), 'red': (0,150)})
+        self.brightnessLevel = QLabeledProgressBar(objectName='brightness', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (150,256), 'red': (0,150)})
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar
-        self.distanceLevel = QLabeledProgressBar(objectName='SNR', textVisible=True, label='dist.', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
+        self.distanceLevel = QLabeledProgressBar(objectName='distance', textVisible=True, label='prox.', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
         # Label for hr and rr data
