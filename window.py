@@ -120,7 +120,7 @@ class AppWindow(QWidget):
         self.left = 40
         self.top = 80
         self.width = 1500
-        self.height = 800
+        self.height = 900
         self.Fs = 30
         self.n_seconds = 20
         self.t = np.linspace(start=0, stop=self.n_seconds, num=self.n_seconds*self.Fs, endpoint=False)
@@ -232,10 +232,16 @@ class AppWindow(QWidget):
         result['hrColor'] = 'green' if result['hrValid'] is True else 'red'
         result['respColor'] = 'green' if result['respValid'] is True else 'red'
         
-        self.HrLabel.setText(('<br><font color="black">&nbsp; Heart Rate:</font>'
-                              + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
-                              + '<br><br><font color="black">&nbsp; Respiratory Rate:</font>'
-                              + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
+        self.HrLabel.setText(('<font color="{hrColor}"> {hr:.0f}</font>'
+                              + '<br><font color="black">[bpm]</font>').format(**result))
+
+        self.RespLabel.setText(('<font color="{respColor}"> {resp:.0f}</font>'
+                              + '<br><font color="black">[bpm]</font>').format(**result))
+        
+        # self.RespLabel.setText(('<br><font color="black">&nbsp; Heart Rate:</font>'
+        #                       + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
+        #                       + '<br><br><font color="black">&nbsp; Respiratory Rate:</font>'
+        #                       + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
     
     
     def updateMessageBox(self, name, flag : bool):
@@ -248,8 +254,9 @@ class AppWindow(QWidget):
             to_print = '<b>Message Box:</b>'
             for name, message in self.messagesToUser.items(): 
                 if self.messagesToUser_On[name] is True:
-                    to_print += '<br>'
+                    to_print += '<p>'
                     to_print += message
+                    to_print += '</p>'
                     
             self.MessageBoxLabel.setText(to_print)
             
@@ -304,15 +311,53 @@ class AppWindow(QWidget):
         
         # create message box
         self.MessageBoxLabel = QLabel()
-        self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 1, 1) # row, col, hight, width
+        self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 2, 1) # row, col, hight, width
         self.MessageBoxLabel.setAlignment(Qt.AlignLeft)
         self.MessageBoxLabel.setStyleSheet("""QLabel { 
                                    background-color : white;
                                    color : black;
-                                   font-size : 12pt; 
+                                   font-size : 14pt; 
                                    }""")
         self.updateMessageBox('distance', False)
         
+        # Label for hr and rr data
+        self.vitals_widget = QWidget()
+        self.vitals_grid = QGridLayout()
+        self.vitals_widget.setLayout(self.vitals_grid)
+        self.grid_layout.addWidget(self.vitals_widget, 0, 2, 2, 1)
+        
+        
+        self.HrLabel = QLabel()
+        self.vitals_grid.addWidget(self.HrLabel, 0, 0, 1, 1) # row, col, hight, width
+        self.HrLabel.setStyleSheet("""QLabel { 
+                                   background-color : white;
+                                   color : black;
+                                   font-size : 26pt; 
+                                   }""")
+        self.HrLabel.setAlignment(Qt.AlignCenter)
+        
+        self.RespLabel = QLabel()
+        self.vitals_grid.addWidget(self.RespLabel, 1, 0, 1, 1) # row, col, hight, width
+        self.RespLabel.setStyleSheet("""QLabel { 
+                                    background-color : white;
+                                    color : black;
+                                    font-size : 26pt; 
+                                    }""")
+        self.RespLabel.setAlignment(Qt.AlignCenter)
+
+        self.HrBPMLabel = QLabel()
+        self.vitals_grid.addWidget(self.HrBPMLabel, 0, 1, 1, 1) # row, col, hight, width
+        self.HrBPMLabel.setPixmap(QPixmap('images/hr.png').scaled(100, 100, aspectRatioMode=Qt.KeepAspectRatio))
+        self.HrBPMLabel.setAlignment(Qt.AlignCenter)
+        self.HrBPMLabel.setStyleSheet('QLabel { background-color : white;}')
+
+        self.RespBPMLabel = QLabel()
+        self.vitals_grid.addWidget(self.RespBPMLabel, 1, 1, 1, 1) # row, col, hight, width
+        self.RespBPMLabel.setPixmap(QPixmap('images/rr.png').scaled(100, 100, aspectRatioMode=Qt.KeepAspectRatio))
+        self.RespBPMLabel.setAlignment(Qt.AlignCenter)
+        self.RespBPMLabel.setStyleSheet('QLabel { background-color : white;}')
+        
+        self.updateVitalsDisplay()
         
         # organize buttons in grid
         self.buttons_widget = QWidget()
@@ -362,27 +407,11 @@ class AppWindow(QWidget):
         self.movementLevel = QLabeledProgressBar(objectName='movement', textVisible=True, label='movement', range=(0,3*self.Fs), format='{:0.0f}', colormap={'green': (0, 1*self.Fs), 'red': (1*self.Fs, 6*self.Fs)}, printMessage=self.updateMessageBox)
         self.progressbars_grid.addWidget(self.movementLevel, 0, 3, 1, 1)
         
-        # Label for hr and rr data
-        self.HrLabel = QLabel()
-        self.grid_layout.addWidget(self.HrLabel, 0, 2, 1, 1) # row, col, hight, width
-        self.HrLabel.setAlignment(Qt.AlignLeft)
-        self.HrLabel.setStyleSheet("""QLabel { 
-                                   background-color : white;
-                                   color : black;
-                                   font-size : 12pt; 
-                                   }""")
-        self.updateVitalsDisplay()
-        
-        
-        # # add figure for welch periodogram
-        # self.WelchFig = Figure(figsize=(7,2)) # width, hight
-        # self.WelchCanvas = FigureCanvas(self.WelchFig)
-        # self.grid_layout.addWidget(self.WelchCanvas, 2, 0, 1, 2)
         
         # add figure for respiratory rate
         self.RespFig = Figure() # figsize=(1, 1.6)) #(4,9)
         self.RespCanvas = FigureCanvas(self.RespFig)
-        self.grid_layout.addWidget(self.RespCanvas, 1, 2, 4, 2)
+        self.grid_layout.addWidget(self.RespCanvas, 2, 2, 3, 2)
         
         gs = self.RespFig.add_gridspec(3,2)
         self.hrAx = self.RespFig.add_subplot(gs[0, :])
