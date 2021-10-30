@@ -48,6 +48,10 @@ class App():
         self.brightness = ([0], [0], [0])
         self.distance_ratio = ([0], [0], [0])
         self.snr = [0]
+        self.diff_center_face = [0]
+        self.movement_indicator = [0]
+        self.middle_x = None
+        self.middle_y = None
         
         self.bandPass = signal.firwin(200, np.array([min_bpm, max_bpm])/60, fs=Fs, pass_zero=False)
         self.z = 4*np.ones(self.bandPass.shape[-1]-1)
@@ -78,6 +82,7 @@ class App():
             print('unknown error in tracking')
             # print(err)
            
+        self.get_movements()
         self.get_brightness(frame)
         self.get_distance_indicator(frame)
         self.n += 1
@@ -235,6 +240,30 @@ class App():
             
         return snr
             
+            
+    def get_movements(self):
+        """
+        get signal from roi
+        """
+        x, y, w, h = self.bbox
+        
+        middle_x = x + w / 2
+        middle_y = y + h / 2
+        
+        if self.middle_x is not None and self.middle_y is not None:
+            self.diff_center_face.append(np.sqrt((self.middle_x - middle_x)**2 
+                                                 + (self.middle_y - middle_y)**2))
+            self.movement_indicator.append(np.mean(self.diff_center_face[-5*self.Fs:]))
+            
+        else:
+            self.middle_x = middle_x
+            self.middle_y = middle_y
+            return None
+        
+        self.middle_x = middle_x
+        self.middle_y = middle_y
+        
+        return  self.movement_indicator[-1]
     
     def set_welch_nwindows(self, nwindows):
         self.welch_obj.set_nwindows(nwindows)

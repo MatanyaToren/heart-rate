@@ -28,6 +28,7 @@ class VideoThread(QThread):
     changeSnr = pyqtSignal(float)
     changeLight = pyqtSignal(float)
     changeDistance = pyqtSignal(float)
+    changeMovement = pyqtSignal(float)
     changeHrResp = pyqtSignal(dict)
     
     
@@ -72,6 +73,7 @@ class VideoThread(QThread):
                         self.changeSnr.emit(self.App.snr[-1])
                         self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
                         self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
+                        self.changeMovement.emit(self.App.movement_indicator[-1])
                         self.changeHrResp.emit({'hr': self.App.HeartRate[-1], 
                                                 'hrValid': self.App.HeartRateValid[-1], 
                                                 'resp': self.App.RespRate[-1],
@@ -312,6 +314,10 @@ class AppWindow(QWidget):
         self.distanceLevel = QLabeledProgressBar(objectName='distance', textVisible=True, label='prox.', range=(0,1), format='{:.1f}', colormap={'green': (0.4, 2), 'red': (0, 0.4)})
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
+        # progress bar
+        self.movementLevel = QLabeledProgressBar(objectName='movement', textVisible=True, label='movement', range=(0,3), format='{:0.0f}', colormap={'green': (0, 1), 'red': (1, 6)})
+        self.progressbars_grid.addWidget(self.movementLevel, 0, 3, 1, 1)
+        
         # Label for hr and rr data
         self.HrLabel = QLabel()
         self.grid_layout.addWidget(self.HrLabel, 0, 2, 1, 1) # row, col, hight, width
@@ -402,6 +408,7 @@ class AppWindow(QWidget):
         self.VideoSource.changeSnr.connect(self.snrLevelBar.setValue)
         self.VideoSource.changeLight.connect(self.brightnessLevel.setValue)
         self.VideoSource.changeDistance.connect(self.distanceLevel.setValue)
+        self.VideoSource.changeMovement.connect(self.movementLevel.setValue)
         self.VideoSource.changeHrResp.connect(self.updateVitalsDisply)
         self.VideoSource.finished.connect(self.close)
         self.VideoSource.start()
