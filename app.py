@@ -34,7 +34,7 @@ class App():
         self.noverlap = 18 * Fs
         self.nstep = self.nperseg - self.noverlap
         self.resp_nstep = 10 * Fs  # updating rate of the respiratory rate
-
+        self.filter_step = int(np.gcd(self.nstep, self.resp_nstep) / 6)
 
         self.HeartRate = [0]
         self.HeartRateValid = [False]
@@ -87,7 +87,7 @@ class App():
         self.get_distance_indicator(frame)
         self.n += 1
         
-        if self.bandPass.shape[0] <= self.n and 0 == self.n % 10:
+        if self.bandPass.shape[0] <= self.n and 0 == self.n % self.filter_step:
             # filtered_chunk, self.z = signal.lfilter(self.bandPass, 1, self.raw_signal[-10:], zi=self.z)
             # self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
             self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.bandPass.shape[0]))
