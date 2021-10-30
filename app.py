@@ -253,7 +253,8 @@ class App():
         if self.middle_x is not None and self.middle_y is not None:
             self.diff_center_face.append(np.sqrt((self.middle_x - middle_x)**2 
                                                  + (self.middle_y - middle_y)**2))
-            self.movement_indicator.append(np.mean(self.diff_center_face[-5*self.Fs:]))
+            # describes pixel displacement of face in a second
+            self.movement_indicator.append(np.mean(self.diff_center_face[-3*self.Fs:]) * self.Fs)
             
         else:
             self.middle_x = middle_x

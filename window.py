@@ -232,7 +232,7 @@ class AppWindow(QWidget):
         result['hrColor'] = 'green' if result['hrValid'] is True else 'red'
         result['respColor'] = 'green' if result['respValid'] is True else 'red'
         
-        self.HrLabel.setText(('<br><br><font color="black">&nbsp; Heart Rate:</font>'
+        self.HrLabel.setText(('<br><font color="black">&nbsp; Heart Rate:</font>'
                               + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
                               + '<br><br><font color="black">&nbsp; Respiratory Rate:</font>'
                               + '<font color="{respColor}"> {resp:.0f} [bpm]</font>').format(**result))
@@ -359,7 +359,7 @@ class AppWindow(QWidget):
         self.progressbars_grid.addWidget(self.distanceLevel, 0, 2, 1, 1)
         
         # progress bar
-        self.movementLevel = QLabeledProgressBar(objectName='movement', textVisible=True, label='movement', range=(0,3), format='{:0.0f}', colormap={'green': (0, 1), 'red': (1, 6)}, printMessage=self.updateMessageBox)
+        self.movementLevel = QLabeledProgressBar(objectName='movement', textVisible=True, label='movement', range=(0,3*self.Fs), format='{:0.0f}', colormap={'green': (0, 1*self.Fs), 'red': (1*self.Fs, 6*self.Fs)}, printMessage=self.updateMessageBox)
         self.progressbars_grid.addWidget(self.movementLevel, 0, 3, 1, 1)
         
         # Label for hr and rr data
@@ -419,11 +419,11 @@ class AppWindow(QWidget):
         self.hrAx.set_ylim([45, 100])
         self.hrAx.set_xlabel('time')
         self.hrAx.set_ylabel('hr [bpm]', color=COLOR_WELCH)
-        self.hrAx.set_title('heart-rate and respiratory-rate')
+        self.hrAx.set_title('heart-rate ({}) and respiratory-rate ({})'.format(COLOR_WELCH, COLOR_LOMB))
         
         self.respAx.step([], [], color=COLOR_LOMB)
         self.respAx.set_ylim([5, 25])
-        self.respAx.set_ylabel('resp. rate [bpm]', color=COLOR_LOMB)
+        self.respAx.set_ylabel('rr [bpm]', color=COLOR_LOMB)
         
         
         # self.WelchFig.tight_layout()
