@@ -119,7 +119,7 @@ class AppWindow(QWidget):
         self.title = 'heart-rate'
         self.left = 40
         self.top = 80
-        self.width = 1500
+        self.width = 1300
         self.height = 900
         self.Fs = 30
         self.n_seconds = 20
@@ -128,8 +128,8 @@ class AppWindow(QWidget):
         self.newData = None
         
         # progress bar messages
-        self.messagesToUser = {'brightness': '- Please move so that your<br> face will be under direct light',
-                               'distance': '- Please get closer<br> to the camera',
+        self.messagesToUser = {'brightness': '- Please move so that your face will be under direct light',
+                               'distance': '- Please get closer to the camera',
                                'movement': '- Please try to stay still'}
         self.messagesToUser_On = {'brightness': False, 
                                   'distance': False,
@@ -232,11 +232,11 @@ class AppWindow(QWidget):
         result['hrColor'] = 'green' if result['hrValid'] is True else 'red'
         result['respColor'] = 'green' if result['respValid'] is True else 'red'
         
-        self.HrLabel.setText(('<font color="{hrColor}"> {hr:.0f}</font>'
-                              + '<br><font color="black">[bpm]</font>').format(**result))
+        self.HrLabel.setText(('<font style="color:{hrColor}; font-size:30pt"> {hr:.0f}</font>'
+                              + '<br><font style="color:black; font-size:12pt">[bpm]</font>').format(**result))
 
-        self.RespLabel.setText(('<font color="{respColor}"> {resp:.0f}</font>'
-                              + '<br><font color="black">[bpm]</font>').format(**result))
+        self.RespLabel.setText(('<font style="color:{respColor}; font-size:30pt"> {resp:.0f}</font>'
+                              + '<br><font style="color:black; font-size:12pt">[bpm]</font>').format(**result))
         
         # self.RespLabel.setText(('<br><font color="black">&nbsp; Heart Rate:</font>'
         #                       + '<font color="{hrColor}"> {hr:.0f} [bpm]</font>'
@@ -301,7 +301,7 @@ class AppWindow(QWidget):
         self.setWindowTitle(self.title)
         self.setGeometry(self.left, self.top, self.width, self.height)
         self.setFixedSize(self.width, self.height)
-        # self.resize(640, 480)
+        # self.setStyleSheet('background-color : white')
         
         # create a label for live video
         self.label = QLabel(self)
@@ -309,30 +309,28 @@ class AppWindow(QWidget):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.resize(640, 480)
         
+        # Label for hr and rr data and messages
+        self.vitals_widget = QWidget()
+        self.vitals_grid = QGridLayout()
+        self.vitals_widget.setLayout(self.vitals_grid)
+        self.grid_layout.addWidget(self.vitals_widget, 0, 2, 2, 2)
+        
         # create message box
         self.MessageBoxLabel = QLabel()
-        self.grid_layout.addWidget(self.MessageBoxLabel, 0, 3, 2, 1) # row, col, hight, width
         self.MessageBoxLabel.setAlignment(Qt.AlignLeft)
         self.MessageBoxLabel.setStyleSheet("""QLabel { 
                                    background-color : white;
                                    color : black;
-                                   font-size : 14pt; 
+                                   font-size : 11pt; 
                                    }""")
         self.updateMessageBox('distance', False)
-        
-        # Label for hr and rr data
-        self.vitals_widget = QWidget()
-        self.vitals_grid = QGridLayout()
-        self.vitals_widget.setLayout(self.vitals_grid)
-        self.grid_layout.addWidget(self.vitals_widget, 0, 2, 2, 1)
-        
+        self.vitals_grid.addWidget(self.MessageBoxLabel, 2, 0, 1, 2) # row, col, hight, width
         
         self.HrLabel = QLabel()
         self.vitals_grid.addWidget(self.HrLabel, 0, 0, 1, 1) # row, col, hight, width
         self.HrLabel.setStyleSheet("""QLabel { 
                                    background-color : white;
                                    color : black;
-                                   font-size : 26pt; 
                                    }""")
         self.HrLabel.setAlignment(Qt.AlignCenter)
         
@@ -341,19 +339,18 @@ class AppWindow(QWidget):
         self.RespLabel.setStyleSheet("""QLabel { 
                                     background-color : white;
                                     color : black;
-                                    font-size : 26pt; 
                                     }""")
         self.RespLabel.setAlignment(Qt.AlignCenter)
 
         self.HrBPMLabel = QLabel()
         self.vitals_grid.addWidget(self.HrBPMLabel, 0, 1, 1, 1) # row, col, hight, width
-        self.HrBPMLabel.setPixmap(QPixmap('images/hr.png').scaled(100, 100, aspectRatioMode=Qt.KeepAspectRatio))
+        self.HrBPMLabel.setPixmap(QPixmap('images/hr.png').scaled(120, 120, aspectRatioMode=Qt.KeepAspectRatio))
         self.HrBPMLabel.setAlignment(Qt.AlignCenter)
         self.HrBPMLabel.setStyleSheet('QLabel { background-color : white;}')
 
         self.RespBPMLabel = QLabel()
         self.vitals_grid.addWidget(self.RespBPMLabel, 1, 1, 1, 1) # row, col, hight, width
-        self.RespBPMLabel.setPixmap(QPixmap('images/rr.png').scaled(100, 100, aspectRatioMode=Qt.KeepAspectRatio))
+        self.RespBPMLabel.setPixmap(QPixmap('images/rr.png').scaled(120, 120, aspectRatioMode=Qt.KeepAspectRatio))
         self.RespBPMLabel.setAlignment(Qt.AlignCenter)
         self.RespBPMLabel.setStyleSheet('QLabel { background-color : white;}')
         
@@ -363,6 +360,7 @@ class AppWindow(QWidget):
         self.buttons_widget = QWidget()
         self.buttons_grid = QGridLayout()
         self.buttons_widget.setLayout(self.buttons_grid)
+        self.buttons_widget.setStyleSheet('background-color : white')
         self.grid_layout.addWidget(self.buttons_widget, 2, 0, 3, 2)
         
         # organize ProgressBars in grid
@@ -389,6 +387,10 @@ class AppWindow(QWidget):
         # add reset button
         self.resetButton = QPushButton('reset')
         self.resetButton.setFixedSize(95,95)
+        font = self.resetButton.font()
+        font.setPointSize(14)
+        self.resetButton.setFont(font)
+        self.resetButton.setStyleSheet("background-color:lightgray; border-color:black;")
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1, alignment=Qt.AlignBottom)
         
         # progress bar
