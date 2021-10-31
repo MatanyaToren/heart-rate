@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import scipy.signal as signal
 import sys
+import os
 from PyQt5.QtWidgets import  QWidget, QLabel, QApplication, QGridLayout, QPushButton, QProgressBar, QStyle
 from PyQt5.QtCore import QThread, Qt, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap
@@ -11,7 +12,8 @@ from matplotlib.backends.backend_qt5agg import (FigureCanvas, NavigationToolbar2
 from matplotlib.backends.backend_qt5 import FigureCanvasQT
 from threading import Thread
 from queue import Queue, Empty
-from time import time
+from datetime import datetime
+import logging
 from app import *
 from QLabeledSpinBox import *
 from QLabeledProgressBar import *
@@ -21,6 +23,28 @@ DEFAULT_FS = 30
 def runEmpty(cap):
     for __ in range(5):
         ret, frame = cap.read()
+        
+        
+def resetLoggerFile():
+
+    if os.path.isdir('output') is not True:
+        os.mkdir('output')
+
+    now = datetime.now()
+    filename = 'output\{}.csv'.format(now.strftime("%d_%m_%Y_%H_%M_%S")) 
+    with open(filename, mode='w') as f:
+        f.write('heart-rate, hrValid, respiratory-rate, respValid, snr, lighting, proximity, movement\n')
+
+    fileh = logging.FileHandler(filename)
+    formatter = logging.Formatter('%(message)s')
+    fileh.setLevel(logging.INFO) # ensure all messages are logged to file
+    fileh.setFormatter(formatter)
+
+    log = logging.getLogger('data')
+    for hdlr in log.handlers[:]:  # remove all old handlers
+        log.removeHandler(hdlr)
+    log.addHandler(fileh)      # set the new handler
+
 
 
 class VideoThread(QThread):
@@ -38,6 +62,11 @@ class VideoThread(QThread):
         super().__init__()
         self.App = App
         self.Fs = Fs
+        
+        self.lgr = logging.getLogger('data')
+        self.lgr.setLevel(logging.INFO)
+        resetLoggerFile()
+        
 
     def run(self):
         rgbImage = np.zeros((480,640,3), dtype=np.uint8)
@@ -70,14 +99,28 @@ class VideoThread(QThread):
                     
 
                     if (n % self.Fs) == 0 and len(self.App.brightness[0]) != 0:
-                        self.changeSnr.emit(self.App.snr[-1])
-                        self.changeLight.emit(np.mean([level[-1] for level in self.App.brightness]))
-                        self.changeDistance.emit(np.mean([level[-1] for level in self.App.distance_ratio]))
-                        self.changeMovement.emit(self.App.movement_indicator[-1])
-                        self.changeHrResp.emit({'hr': self.App.HeartRate[-1], 
+                        resDict = {'hr': self.App.HeartRate[-1], 
                                                 'hrValid': self.App.HeartRateValid[-1], 
                                                 'resp': self.App.RespRate[-1],
-                                                'respValid': self.App.RespRateValid[-1]})
+                                                'respValid': self.App.RespRateValid[-1]}
+                        snr = self.App.snr[-1]
+                        lighting = np.mean([level[-1] for level in self.App.brightness])
+                        proximity = np.mean([level[-1] for level in self.App.distance_ratio])
+                        movement = self.App.movement_indicator[-1]
+                        self.changeSnr.emit(snr)
+                        self.changeLight.emit(lighting)
+                        self.changeDistance.emit(proximity)
+                        self.changeMovement.emit(movement)
+                        self.changeHrResp.emit(resDict)
+                        
+                        self.lgr.info(('{hr:.1f}, {hrValid}, ' 
+                                       + '{resp:.1f}, {respValid}, ' 
+                                       + '{snr:.2f}, {lighting:0.0f}, ' 
+                                       + '{proximity:.2f}, {movement:.2f}').format(**resDict, 
+                                                                           snr=self.App.snr[-1],
+                                                                           lighting=lighting, 
+                                                                           proximity=proximity,
+                                                                           movement=movement))
                     
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
@@ -466,6 +509,7 @@ class AppWindow(QWidget):
         self.welchWinSizeSpinBox.connect(self.App.set_welch_nperseg)
         self.resetButton.clicked.connect(self.App.reset)
         self.resetButton.clicked.connect(self.reset_plot)
+        self.resetButton.clicked.connect(resetLoggerFile)
         
         # self.Welchani = FuncAnimation(self.RespFig, self.WelchUpdate, blit=True, interval=100) 
         self.RespAni = FuncAnimation(self.RespFig, self.RespUpdate, blit=True, interval=100)
