@@ -116,11 +116,12 @@ class VideoThread(QThread):
                         self.lgr.info(('{hr:.1f}, {hrValid}, ' 
                                        + '{resp:.1f}, {respValid}, ' 
                                        + '{snr:.2f}, {lighting:0.0f}, ' 
-                                       + '{proximity:.2f}, {movement:.2f}').format(**resDict, 
-                                                                           snr=self.App.snr[-1],
-                                                                           lighting=lighting, 
-                                                                           proximity=proximity,
-                                                                           movement=movement))
+                                       + '{proximity:.2f}, {movement:.2f}'
+                                       ).format(**resDict, 
+                                                snr=self.App.snr[-1],
+                                                lighting=lighting, 
+                                                proximity=proximity,
+                                                movement=movement))
                     
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
