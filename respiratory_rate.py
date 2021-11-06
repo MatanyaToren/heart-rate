@@ -75,14 +75,14 @@ class respiratory():
             
         else:
             f = self.freqs
-            pgram = np.zeros(f.shape)
+            self.pgram = np.zeros(f.shape)
             
         return f, pgram
 
     
     def update_plot(self, ppg, peaks):
         xdata = iter([np.arange(self.time-len(ppg), self.time), peaks+self.time-len(ppg), self.freqs, self.peak_times])
-        ydata = iter([ppg, ppg[peaks], self.pgram, self.rri])
+        ydata = iter([ppg, ppg[peaks], np.mean(self.pgrams, axis=0), self.rri])
         for ax in self.fig.get_axes():
             for line in ax.get_lines():
                 x = next(xdata)
