@@ -125,6 +125,11 @@ class VideoThread(QThread):
                     
                 except SampleError as err:
                     frameRect =  cv2.flip(frame, 1)
+                    resDict = {'hr': self.App.HeartRate[-1], 
+                                                'hrValid': False, 
+                                                'resp': self.App.RespRate[-1],
+                                                'respValid': False}
+                    self.changeHrResp.emit(resDict)
                     
                 except Exception as err:
                     print(err)
