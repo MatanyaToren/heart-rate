@@ -117,7 +117,7 @@ class App():
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-                pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
+                # pgram = pgram * scipy.stats.norm(14/60, 4/60).pdf(freqs*self.Fs)
                 RespRate, RespRateValid = self.resp_rate_otlier_removal.update(freqs[pgram.argmax()] * self.Fs * 60)
                 self.RespRate.append(RespRate)
                 self.RespRateValid.append(RespRateValid)
