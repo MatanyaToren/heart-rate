@@ -117,21 +117,28 @@ class App():
             # calculate the respiratory rate
             try:
                 freqs, pgram = self.resp.main(self.filtered_signal[-self.resp_nstep:])
-                pgram = pgram * np.logical_and(freqs >= 5/self.Fs/60, freqs <= 25/self.Fs/60)
-                RespRate, RespRateValid = self.resp_rate_otlier_removal.update(freqs[pgram.argmax()] * self.Fs * 60)
-                self.RespRate.append(RespRate)
-                self.RespRateValid.append(RespRateValid)
-                self.RespRateTime.append(self.n/self.Fs)
                 
-                self.RespQueue.put({'freqs': freqs*self.Fs, 
-                                    'pgram': pgram, 
-                                    'peak_times': np.array(self.resp.peak_times), 
-                                    'rri': np.array(self.resp.rri),
-                                    'RespRate': np.array(self.RespRate), 
-                                    'RespRateValid': np.array(self.RespRateValid), 
-                                    'RespRateTime': np.array(self.RespRateTime), 
-                                    'Lower': self.resp_rate_otlier_removal.lower, 
-                                    'Higher': self.resp_rate_otlier_removal.higher})
+                if 40*self.Fs <= self.n:
+                    pgram = pgram * np.logical_and(freqs >= 5/self.Fs/60, freqs <= 25/self.Fs/60)
+                    resp_peaks, _ = signal.find_peaks(pgram)
+                    sorted_args = np.argsort(pgram[resp_peaks])
+                    max_peak = resp_peaks[sorted_args[-1]]
+                    second_peak = resp_peaks[sorted_args[-2]]
+                                            
+                    RespRate, RespRateValid = self.resp_rate_otlier_removal.update(freqs[max_peak] * self.Fs * 60)
+                    self.RespRate.append(RespRate)
+                    self.RespRateValid.append(RespRateValid and (pgram[max_peak] > 1.5*pgram[second_peak]))
+                    self.RespRateTime.append(self.n/self.Fs)
+                    
+                    self.RespQueue.put({'freqs': freqs*self.Fs, 
+                                        'pgram': pgram, 
+                                        'peak_times': np.array(self.resp.peak_times), 
+                                        'rri': np.array(self.resp.rri),
+                                        'RespRate': np.array(self.RespRate), 
+                                        'RespRateValid': np.array(self.RespRateValid), 
+                                        'RespRateTime': np.array(self.RespRateTime), 
+                                        'Lower': self.resp_rate_otlier_removal.lower, 
+                                        'Higher': self.resp_rate_otlier_removal.higher})
                 
             except RuntimeError:
                 print('no peaks were found')
@@ -155,8 +162,8 @@ class App():
             y_roi = int(y + offset_y * h)
             h_roi = int(h * size_y)
             
-            if (x_roi < 0 or x_roi+w_roi >= frame.shape[1] 
-                or y_roi < 0 or y_roi+h_roi >= frame.shape[0]):
+            if (x_roi < 0 or x_roi+w_roi+1 >= frame.shape[1] 
+                or y_roi < 0 or y_roi+h_roi+1 >= frame.shape[0]):
                 
                 raise OutOfFrameError
             

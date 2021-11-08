@@ -55,7 +55,11 @@ class respiratory():
         if peaks.shape[0] == 0:
             raise RuntimeError
         
-        freqs, pgram = self.esitmate_res_rate()
+        if len(self.peak_times) >= 40: 
+            freqs, pgram = self.esitmate_res_rate()
+        else:
+            freqs, pgram = self.freqs, np.zeros(self.freqs.shape)
+            
         pgram_func = interp1d(freqs, pgram, bounds_error=False, fill_value='extrapolate')
         self.pgrams.append(pgram_func(self.freqs))
         if len(self.pgrams) > self.nwindows:
