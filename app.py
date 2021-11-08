@@ -91,7 +91,7 @@ class App():
             # filtered_chunk, self.z = signal.lfilter(self.bandPass, 1, self.raw_signal[-10:], zi=self.z)
             # self.filtered_signal = np.concatenate((self.filtered_signal, filtered_chunk))
             self.filtered_signal = signal.filtfilt(self.bandPass, 1, self.raw_signal, padlen=min(len(self.raw_signal)-2, 3*self.bandPass.shape[0]))
-            self.SignalQueue.put(self.filtered_signal)
+            self.SignalQueue.put({'raw': np.array(self.raw_signal), 'filtered': self.filtered_signal})
             
 
         if max(self.nperseg, self.bandPass.shape[0]) <= self.n and 0 == self.n % self.nstep:
