@@ -14,6 +14,7 @@ from threading import Thread
 from queue import Queue, Empty
 from datetime import datetime
 import logging
+from scipy.io import savemat
 from app import *
 from QLabeledSpinBox import *
 from QLabeledProgressBar import *
@@ -175,6 +176,8 @@ class AppWindow(QWidget):
         self.t = np.linspace(start=0, stop=self.n_seconds, num=self.n_seconds*self.Fs, endpoint=False)
         self.t_rri = np.linspace(start=0, stop=2*self.n_seconds, num=2*self.n_seconds*self.Fs, endpoint=False)
         self.newData = None
+        self.signalDict = None
+        self.WelchData = None
         
         # progress bar messages
         self.messagesToUser = {'brightness': '- Please move so that your face will be under direct light',
@@ -216,6 +219,7 @@ class AppWindow(QWidget):
         
         try:
             WelchData = self.App.WelchQueue.get_nowait()
+            self.WelchData = WelchData
             WelchLine.set_data(WelchData['f']*60, WelchData['pxx'])
             
             offset_hr = WelchData['HeartRateTime'][-1] - 2*self.n_seconds if WelchData['HeartRateTime'][-1] > 2*self.n_seconds else 0
@@ -234,7 +238,9 @@ class AppWindow(QWidget):
          
         
         try:
-            filtered_signal = self.App.SignalQueue.get_nowait()
+            signalDict = self.App.SignalQueue.get_nowait()
+            self.signalDict = signalDict
+            filtered_signal = signalDict['filtered']
       
             ppgLine.set_data(self.t[:filtered_signal.shape[0]], filtered_signal[-self.n_seconds*self.App.Fs:])
             try:
@@ -320,6 +326,15 @@ class AppWindow(QWidget):
     
     
     def reset_plot(self):
+        if (
+            self.newData is not None 
+            and self.WelchData is not None 
+            and self.signalDict is not None
+            ):
+            now = datetime.now()
+            filename = 'output\signals_{}.mat'.format(now.strftime("%d_%m_%Y_%H_%M_%S"))
+            savemat(filename, {**self.newData, **self.WelchData, **self.signalDict})
+            
         del self.newData
         self.newData = None
         
