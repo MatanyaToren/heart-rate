@@ -123,12 +123,12 @@ class App():
                     pgram = pgram * np.logical_and(freqs >= 5/self.Fs/60, freqs <= 25/self.Fs/60)
                     resp_peaks, _ = signal.find_peaks(pgram)
                     sorted_args = np.argsort(pgram[resp_peaks])
-                    max_peak = resp_peaks[sorted_args[-1]]
-                    second_peak = resp_peaks[sorted_args[-2]]
+                    max_peak = resp_peaks[sorted_args[-1]] if sorted_args.size != 0 else 0
+                    second_peak = resp_peaks[sorted_args[-2]] if sorted_args.size > 1 else 0
                                             
                     RespRate, RespRateValid = self.resp_rate_otlier_removal.update(freqs[max_peak] * self.Fs * 60)
                     self.RespRate.append(RespRate)
-                    self.RespRateValid.append(RespRateValid and (pgram[max_peak] > 1.5*pgram[second_peak]))
+                    self.RespRateValid.append(RespRateValid and (pgram[max_peak] > pgram[second_peak]))
                     self.RespRateTime.append(self.n/self.Fs)
                     
                     self.RespQueue.put({'freqs': freqs*self.Fs, 
@@ -180,7 +180,7 @@ class App():
                 
             self.rois = rois
                         
-        self.raw_signal.append(newSample)
+        self.raw_signal.append(newSample/len(rois))
 
 
 
