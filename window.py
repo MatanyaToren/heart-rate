@@ -453,11 +453,11 @@ class AppWindow(QWidget):
         self.buttons_grid.addWidget(self.resetButton, 1, 0, 1, 1, alignment=Qt.AlignBottom)
         
         # progress bar
-        self.snrLevelBar = QLabeledProgressBar(objectName='snr', textVisible=True, label='snr', range=(-5,5), colormap={'green': (0,10), 'red': (-10,0)})
+        self.snrLevelBar = QLabeledProgressBar(objectName='snr', textVisible=True, label='snr', range=(-8,5), colormap={'green': (0,10), 'red': (-10,0)})
         self.progressbars_grid.addWidget(self.snrLevelBar, 0, 0, 1, 1)
         
         # progress bar
-        self.brightnessLevel = QLabeledProgressBar(objectName='brightness', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (150,256), 'red': (0,150)}, printMessage=self.updateMessageBox)
+        self.brightnessLevel = QLabeledProgressBar(objectName='brightness', textVisible=True, label='light', range=(0,255), format='{:0.0f}', colormap={'green': (130,256), 'red': (0,130)}, printMessage=self.updateMessageBox)
         self.progressbars_grid.addWidget(self.brightnessLevel, 0, 1, 1, 1)
         
         # progress bar

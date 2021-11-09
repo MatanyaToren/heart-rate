@@ -128,7 +128,7 @@ class App():
                                             
                     RespRate, RespRateValid = self.resp_rate_otlier_removal.update(freqs[max_peak] * self.Fs * 60)
                     self.RespRate.append(RespRate)
-                    self.RespRateValid.append(RespRateValid and (pgram[max_peak] > 1.5*pgram[second_peak]))
+                    self.RespRateValid.append(RespRateValid and (pgram[max_peak] > 1.3 * pgram[second_peak]))
                     self.RespRateTime.append(self.n/self.Fs)
                     
                     self.RespQueue.put({'freqs': freqs*self.Fs, 
