@@ -21,7 +21,7 @@ from QLabeledProgressBar import *
 DEFAULT_FS = 30
 
 def runEmpty(cap):
-    for __ in range(5):
+    for __ in range(30):
         ret, frame = cap.read()
         
         
@@ -78,6 +78,7 @@ class VideoThread(QThread):
         
         cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
         # cap = cv2.VideoCapture('videos/breathing_12bpm.mp4')
+        runEmpty(cap)
         n = 0
         while cap.isOpened() and self.runs:
             ret, frame = cap.read()
@@ -221,7 +222,7 @@ class AppWindow(QWidget):
             offset_hr = WelchData['HeartRateTime'][-1] - 2*self.n_seconds if WelchData['HeartRateTime'][-1] > 2*self.n_seconds else 0
             hrLine.set_data(WelchData['HeartRateTime'] - offset_hr,
                             WelchData['HeartRate'])
-            self.WelchAx.set_ylim([0, max(np.nanmax(WelchData['pxx']), 1.1)])
+            self.WelchAx.set_ylim([0, max(np.nanmax(WelchData['pxx']), 0.3)])
             
         except Empty:
             pass
@@ -270,16 +271,25 @@ class AppWindow(QWidget):
             lombLine.set_data(60*newData['freqs'], newData['pgram'])
             
             # self.rriAx.set_ylim([rri.min(), rri.max()])
-            self.lombAx.set_ylim([0, max(newData['pgram'].max(), 1.1)])
+            self.lombAx.set_ylim([0, max(newData['pgram'].max(), 0.4)])
             
         except Empty:
             pass
         
         return ppgLine, maxLine, lombLine, respLine, hrLine, WelchLine
     
-    def updateVitalsDisplay(self, result: dict = {'hr': 65, 'hrValid': False, 'resp': 12, 'respValid': False}):
-        result['hrColor'] = 'green' if result['hrValid'] is True else 'red'
-        result['respColor'] = 'green' if result['respValid'] is True else 'red'
+    def updateVitalsDisplay(self, res: dict = {'hr': 65, 'hrValid': False, 'resp': 12, 'respValid': False}):
+        result = res.copy()
+        
+        if result['hrValid']:
+            result['hrColor'] = 'green' 
+        else:
+            result['hrColor'] =  'red'
+            
+        if result['respValid']:
+            result['respColor'] = 'green' 
+        else:
+            result['respColor'] =  'red'
         
         self.HrLabel.setText(('<font style="color:{hrColor}; font-size:30pt"> {hr:.0f}</font>'
                               + '<br><font style="color:black; font-size:12pt">[bpm]</font>').format(**result))
@@ -478,11 +488,11 @@ class AppWindow(QWidget):
         self.WelchAx.set_xlabel('beats per minute')
         self.WelchAx.set_title('heart rate: welch', color=COLOR_WELCH)
         self.WelchAx.set_xlim([0, 180])
-        self.WelchAx.set_ylim([0, 1.1])
+        self.WelchAx.set_ylim([0, 0.3])
         
         self.lombAx.plot([], [], color=COLOR_LOMB)
         self.lombAx.set_xlim([0, 40])
-        self.lombAx.set_ylim([0, 1.1])
+        self.lombAx.set_ylim([0, 0.4])
         self.lombAx.set_xlabel('breaths per minute')
         self.lombAx.set_title('resp. rate: lomb', color=COLOR_LOMB)
         

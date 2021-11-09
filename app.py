@@ -99,9 +99,10 @@ class App():
             hr_valid_range = np.logical_and(f >= self.min_bpm/60, f <= self.max_bpm/60)
             tmp_hr = f[hr_valid_range][np.argmax(pxx[hr_valid_range])] * 60
             HeartRate, HeartRateValid = self.heart_rate_otlier_removal.update(tmp_hr)
-            self.get_snr(pxx, f, self.HeartRate[-1]/60)
+            snr = self.get_snr(pxx, f, self.HeartRate[-1]/60)
+            self.snr.append(snr)
             self.HeartRate.append(HeartRate)
-            self.HeartRateValid.append(HeartRateValid)
+            self.HeartRateValid.append(HeartRateValid and (snr > -1))
             self.HeartRateTime.append(self.n/self.Fs)
             self.WelchQueue.put({'f': f, 'pxx': pxx, 
                                  'HeartRate': np.array(self.HeartRate), 
@@ -235,7 +236,6 @@ class App():
             SignalRange = np.logical_and(f > (peak - 0.2), f < (peak + 0.2))
             SignalEnergy = pxx[SignalRange].sum()
             snr = 10*np.log10(SignalEnergy / (TotalEnergy - SignalEnergy + 1e-7))
-            self.snr.append(snr)
         
         except RuntimeWarning as e:
             print(e)
